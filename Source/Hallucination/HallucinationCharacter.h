@@ -38,6 +38,27 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	float RunSpeed;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float MaxStemina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float Stemina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float SteminaConsumptionRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float SteminaRecoveryRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool IsExhaused;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool IsRunning;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float SteminaRecoveryThreshold;
+
 	/** Camera Shake */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UCameraShakeBase> CS_Idle;
@@ -57,6 +78,16 @@ protected:
 private:
 	UFUNCTION(BlueprintCallable, Category=CameraShake)
 	void SetCameraShake(FVector velocity);
+
+	UFUNCTION(BlueprintCallable, Category = Movement)
+	void StartSprint();
+
+	UFUNCTION(BlueprintCallable, Category = Movement)
+	void CheckStemina();
+
+	UFUNCTION(BlueprintCallable, Category = Movement)
+	void EndSprint();
+
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/InputSettings.h"
 
 
@@ -37,6 +38,14 @@ AHallucinationCharacter::AHallucinationCharacter()
 
 	WalkSpeed = 300.f;
 	RunSpeed = 600.f;
+	MaxStemina = 100.f;
+	Stemina = MaxStemina;
+	IsExhaused = false;
+	IsRunning = false;
+	SteminaConsumptionRate = 20.f;
+	SteminaRecoveryRate = 10.f;
+	SteminaRecoveryThreshold = 20.f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -51,7 +60,7 @@ void AHallucinationCharacter::SetCameraShake(FVector velocity)
 	double speed = velocity.Length();
 	APlayerController* controller = GetWorld()->GetFirstPlayerController();
 
-	check(controller!=nullptr);
+	check(controller != nullptr);
 
 	TSubclassOf<UCameraShakeBase> cameraShake;
 	if (speed == 0.f) {
@@ -64,6 +73,51 @@ void AHallucinationCharacter::SetCameraShake(FVector velocity)
 		cameraShake = CS_Run;
 	}
 	controller->ClientPlayCameraShake(cameraShake, 1.0f);
+}
+
+void AHallucinationCharacter::StartSprint()
+{
+	UCharacterMovementComponent* movement = GetCharacterMovement();
+
+	check(movement);
+	if (IsExhaused == false)
+	{
+		IsRunning = true;
+		movement->MaxWalkSpeed = RunSpeed;
+	}
+}
+
+void AHallucinationCharacter::CheckStemina()
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	if (IsRunning)
+	{
+		Stemina -= world->DeltaTimeSeconds * SteminaConsumptionRate;
+		if (Stemina <= 0.0f)
+		{
+			IsExhaused = true;
+			EndSprint();
+		}
+	}
+	else
+	{
+		float newStemina = Stemina + world->DeltaTimeSeconds * SteminaRecoveryRate;
+		Stemina = newStemina < MaxStemina ? newStemina : MaxStemina;
+		if (IsExhaused && Stemina >= SteminaRecoveryThreshold)
+		{
+			IsExhaused = false;
+		}
+	}
+}
+
+void AHallucinationCharacter::EndSprint()
+{
+	UCharacterMovementComponent* movement = GetCharacterMovement();
+	check(movement);
+	movement->MaxWalkSpeed = WalkSpeed;
+	IsRunning = false;
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
