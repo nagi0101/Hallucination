@@ -30,11 +30,33 @@ class AHallucinationCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
 
+private:
+	/** Movement */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float WalkSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float RunSpeed;
+
+	/** Camera Shake */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> CS_Idle;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> CS_Walk;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> CS_Run;
+
 public:
 	AHallucinationCharacter();
 
 protected:
 	virtual void BeginPlay();
+
+private:
+	UFUNCTION(BlueprintCallable, Category=CameraShake)
+	void SetCameraShake(FVector velocity);
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

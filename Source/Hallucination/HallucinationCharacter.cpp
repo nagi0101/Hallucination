@@ -35,6 +35,8 @@ AHallucinationCharacter::AHallucinationCharacter()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
+	WalkSpeed = 300.f;
+	RunSpeed = 600.f;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -42,6 +44,26 @@ void AHallucinationCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+}
+
+void AHallucinationCharacter::SetCameraShake(FVector velocity)
+{
+	double speed = velocity.Length();
+	APlayerController* controller = GetWorld()->GetFirstPlayerController();
+
+	check(controller!=nullptr);
+
+	TSubclassOf<UCameraShakeBase> cameraShake;
+	if (speed == 0.f) {
+		cameraShake = CS_Idle;
+	}
+	else if (speed <= WalkSpeed) {
+		cameraShake = CS_Walk;
+	}
+	else {
+		cameraShake = CS_Run;
+	}
+	controller->ClientPlayCameraShake(cameraShake, 1.0f);
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
