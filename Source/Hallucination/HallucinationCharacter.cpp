@@ -36,8 +36,12 @@ AHallucinationCharacter::AHallucinationCharacter()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
+	// Movement
+	UCharacterMovementComponent* movement = GetCharacterMovement();
+	check(movement);
 	WalkSpeed = 300.f;
 	RunSpeed = 600.f;
+	movement->MaxWalkSpeed = WalkSpeed;
 	MaxStemina = 100.f;
 	Stemina = MaxStemina;
 	IsExhaused = false;
@@ -45,7 +49,10 @@ AHallucinationCharacter::AHallucinationCharacter()
 	SteminaConsumptionRate = 20.f;
 	SteminaRecoveryRate = 10.f;
 	SteminaRecoveryThreshold = 20.f;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	// Crouch
+	movement->MaxWalkSpeedCrouched = WalkSpeed / 2.f;
+	movement->GetNavAgentPropertiesRef().bCanCrouch = true;
+	movement->SetCrouchedHalfHeight(GetCapsuleComponent()->GetScaledCapsuleHalfHeight() / 2.f);
 }
 
 void AHallucinationCharacter::BeginPlay()
