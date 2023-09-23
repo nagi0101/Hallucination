@@ -88,6 +88,8 @@ private:
 	UFUNCTION(BlueprintCallable, Category = Movement)
 	void EndSprint();
 
+	UFUNCTION(BlueprintCallable, Category = Ability)
+	void Pickup();
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "HallucinationCharacter.h"
+#include "HallucinationCharacter.h"
 #include "HallucinationProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -78,7 +79,7 @@ void AHallucinationCharacter::SetCameraShake(FVector velocity)
 	}
 	else {
 		cameraShake = CS_Run;
-	}
+	}	
 	controller->ClientPlayCameraShake(cameraShake, 1.0f);
 }
 
@@ -125,6 +126,11 @@ void AHallucinationCharacter::EndSprint()
 	check(movement);
 	movement->MaxWalkSpeed = WalkSpeed;
 	IsRunning = false;
+}
+
+void AHallucinationCharacter::Pickup()
+{
+	
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
