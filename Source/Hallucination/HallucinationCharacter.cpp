@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "HallucinationCharacter.h"
-#include "HallucinationCharacter.h"
 #include "HallucinationProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -61,6 +60,9 @@ void AHallucinationCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	// PostProcess
+	SetPostProcessMaterialInstance(M_Vinyette, MD_Vinyette);
+	SetPostProcessParameter();
 }
 
 void AHallucinationCharacter::SetCameraShake(FVector velocity)
@@ -128,6 +130,24 @@ void AHallucinationCharacter::EndSprint()
 	IsRunning = false;
 }
 
+void AHallucinationCharacter::SetPostProcessParameter()
+{
+	float steminaRate = Stemina / MaxStemina;
+	
+	float vinyetteStart = 0.2f * steminaRate + 0.1f * (1 - steminaRate);
+	float vinyetteEnd = 1.f * steminaRate + 0.8f * (1 - steminaRate);
+	float vinyetteMax = 0.8f * steminaRate + 0.9f * (1 - steminaRate);
+
+	MD_Vinyette->SetScalarParameterValue("VinyetteStart", vinyetteStart);
+	MD_Vinyette->SetScalarParameterValue("VinyetteEnd", vinyetteEnd);
+	MD_Vinyette->SetScalarParameterValue("VinyetteMax", vinyetteMax);
+}
+
+void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface* &Material, UMaterialInstanceDynamic* &DynamicMaterial)
+{
+	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
+	FirstPersonCameraComponent->AddOrUpdateBlendable(DynamicMaterial);
+}
 void AHallucinationCharacter::Pickup()
 {
 	

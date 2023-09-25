@@ -69,6 +69,12 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UCameraShakeBase> CS_Run;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = PostProcessMaterial, meta = (AllowPrivateAccess = "true"))
+	UMaterialInterface* M_Vinyette;
+
+	UPROPERTY(meta = (AllowPrivateAccess = "true"))
+	UMaterialInstanceDynamic* MD_Vinyette;
+
 public:
 	AHallucinationCharacter();
 
@@ -90,6 +96,12 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = Ability)
 	void Pickup();
+
+	UFUNCTION(BlueprintCallable, Category = PostProcess)
+	void SetPostProcessParameter();
+
+	UFUNCTION(BlueprintCallable, Category = PostProcess)
+	void SetPostProcessMaterialInstance(UMaterialInterface*& Material, UMaterialInstanceDynamic*& DynamicMaterial);
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
