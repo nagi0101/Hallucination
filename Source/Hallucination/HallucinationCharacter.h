@@ -30,11 +30,78 @@ class AHallucinationCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
 
+private:
+	/** Movement */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float WalkSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float RunSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float MaxStemina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float Stemina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float SteminaConsumptionRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float SteminaRecoveryRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool IsExhaused;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool IsRunning;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float SteminaRecoveryThreshold;
+
+	/** Camera Shake */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> CS_Idle;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> CS_Walk;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> CS_Run;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = PostProcessMaterial, meta = (AllowPrivateAccess = "true"))
+	UMaterialInterface* M_Vinyette;
+
+	UPROPERTY(meta = (AllowPrivateAccess = "true"))
+	UMaterialInstanceDynamic* MD_Vinyette;
+
 public:
 	AHallucinationCharacter();
 
 protected:
 	virtual void BeginPlay();
+
+private:
+	UFUNCTION(BlueprintCallable, Category=CameraShake)
+	void SetCameraShake(FVector velocity);
+
+	UFUNCTION(BlueprintCallable, Category = Movement)
+	void StartSprint();
+
+	UFUNCTION(BlueprintCallable, Category = Movement)
+	void CheckStemina();
+
+	UFUNCTION(BlueprintCallable, Category = Movement)
+	void EndSprint();
+
+	UFUNCTION(BlueprintCallable, Category = Ability)
+	void Pickup();
+
+	UFUNCTION(BlueprintCallable, Category = PostProcess)
+	void SetPostProcessParameter();
+
+	UFUNCTION(BlueprintCallable, Category = PostProcess)
+	void SetPostProcessMaterialInstance(UMaterialInterface*& Material, UMaterialInstanceDynamic*& DynamicMaterial);
 
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

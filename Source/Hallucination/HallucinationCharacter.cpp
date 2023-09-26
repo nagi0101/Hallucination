@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/InputSettings.h"
 
 
@@ -35,6 +36,23 @@ AHallucinationCharacter::AHallucinationCharacter()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
+	// Movement
+	UCharacterMovementComponent* movement = GetCharacterMovement();
+	check(movement);
+	WalkSpeed = 300.f;
+	RunSpeed = 600.f;
+	movement->MaxWalkSpeed = WalkSpeed;
+	MaxStemina = 100.f;
+	Stemina = MaxStemina;
+	IsExhaused = false;
+	IsRunning = false;
+	SteminaConsumptionRate = 20.f;
+	SteminaRecoveryRate = 10.f;
+	SteminaRecoveryThreshold = 20.f;
+	// Crouch
+	movement->MaxWalkSpeedCrouched = WalkSpeed / 2.f;
+	movement->GetNavAgentPropertiesRef().bCanCrouch = true;
+	movement->SetCrouchedHalfHeight(GetCapsuleComponent()->GetScaledCapsuleHalfHeight() / 2.f);
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -42,6 +60,97 @@ void AHallucinationCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	// PostProcess
+	SetPostProcessMaterialInstance(M_Vinyette, MD_Vinyette);
+	SetPostProcessParameter();
+}
+
+void AHallucinationCharacter::SetCameraShake(FVector velocity)
+{
+	double speed = velocity.Length();
+	APlayerController* controller = GetWorld()->GetFirstPlayerController();
+
+	check(controller != nullptr);
+
+	TSubclassOf<UCameraShakeBase> cameraShake;
+	if (speed == 0.f) {
+		cameraShake = CS_Idle;
+	}
+	else if (speed <= WalkSpeed) {
+		cameraShake = CS_Walk;
+	}
+	else {
+		cameraShake = CS_Run;
+	}	
+	controller->ClientPlayCameraShake(cameraShake, 1.0f);
+}
+
+void AHallucinationCharacter::StartSprint()
+{
+	UCharacterMovementComponent* movement = GetCharacterMovement();
+
+	check(movement);
+	if (IsExhaused == false)
+	{
+		IsRunning = true;
+		movement->MaxWalkSpeed = RunSpeed;
+	}
+}
+
+void AHallucinationCharacter::CheckStemina()
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	if (IsRunning)
+	{
+		Stemina -= world->DeltaTimeSeconds * SteminaConsumptionRate;
+		if (Stemina <= 0.0f)
+		{
+			IsExhaused = true;
+			EndSprint();
+		}
+	}
+	else
+	{
+		float newStemina = Stemina + world->DeltaTimeSeconds * SteminaRecoveryRate;
+		Stemina = newStemina < MaxStemina ? newStemina : MaxStemina;
+		if (IsExhaused && Stemina >= SteminaRecoveryThreshold)
+		{
+			IsExhaused = false;
+		}
+	}
+}
+
+void AHallucinationCharacter::EndSprint()
+{
+	UCharacterMovementComponent* movement = GetCharacterMovement();
+	check(movement);
+	movement->MaxWalkSpeed = WalkSpeed;
+	IsRunning = false;
+}
+
+void AHallucinationCharacter::SetPostProcessParameter()
+{
+	float steminaRate = Stemina / MaxStemina;
+	
+	float vinyetteStart = 0.2f * steminaRate + 0.1f * (1 - steminaRate);
+	float vinyetteEnd = 1.f * steminaRate + 0.8f * (1 - steminaRate);
+	float vinyetteMax = 0.8f * steminaRate + 0.9f * (1 - steminaRate);
+
+	MD_Vinyette->SetScalarParameterValue("VinyetteStart", vinyetteStart);
+	MD_Vinyette->SetScalarParameterValue("VinyetteEnd", vinyetteEnd);
+	MD_Vinyette->SetScalarParameterValue("VinyetteMax", vinyetteMax);
+}
+
+void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface* &Material, UMaterialInstanceDynamic* &DynamicMaterial)
+{
+	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
+	FirstPersonCameraComponent->AddOrUpdateBlendable(DynamicMaterial);
+}
+void AHallucinationCharacter::Pickup()
+{
+	
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
