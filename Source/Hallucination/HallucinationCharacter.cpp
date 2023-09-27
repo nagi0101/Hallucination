@@ -8,6 +8,7 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/InputSettings.h"
+#include "Kismet/GameplayStatics.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -46,13 +47,29 @@ AHallucinationCharacter::AHallucinationCharacter()
 	Stemina = MaxStemina;
 	IsExhaused = false;
 	IsRunning = false;
-	SteminaConsumptionRate = 20.f;
 	SteminaRecoveryRate = 10.f;
+	SteminaConsumptionRun = 10.f;
+	SteminaConsumptionBreath = 5.f;
 	SteminaRecoveryThreshold = 20.f;
 	// Crouch
 	movement->MaxWalkSpeedCrouched = WalkSpeed / 2.f;
 	movement->GetNavAgentPropertiesRef().bCanCrouch = true;
 	movement->SetCrouchedHalfHeight(GetCapsuleComponent()->GetScaledCapsuleHalfHeight() / 2.f);
+
+	// Camera Shake
+	CS_Idle = nullptr;
+	CS_Run = nullptr;
+	CS_Walk = nullptr;
+
+	// Post Process
+	M_Vinyette = nullptr;
+	MD_Vinyette = nullptr;
+
+	// Breath
+	IsHoldingBreath = false;
+	SB_Inhale = nullptr;
+	SB_Exhale = nullptr;
+	SB_ExhaleStrong = nullptr;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -85,6 +102,32 @@ void AHallucinationCharacter::SetCameraShake(FVector velocity)
 	controller->ClientPlayCameraShake(cameraShake, 1.0f);
 }
 
+void AHallucinationCharacter::CheckStemina(float deltaTime)
+{
+	float steminaConsumption = 
+		IsRunning * SteminaConsumptionRun + 
+		IsHoldingBreath	* SteminaConsumptionBreath;
+	float deltaStemina = deltaTime * (steminaConsumption > 0.f ? -steminaConsumption : SteminaRecoveryRate);
+	Stemina = FMath::Clamp(Stemina + deltaStemina, 0.f, MaxStemina);
+
+	if (IsExhaused)
+	{
+		if (Stemina >= SteminaRecoveryThreshold)
+		{
+			IsExhaused = false;
+		}
+	}
+	else
+	{
+		if (Stemina <= 0.f)
+		{
+			IsExhaused = true;
+			EndSprint();
+			EndHoldBreath();
+		}
+	}
+}
+
 void AHallucinationCharacter::StartSprint()
 {
 	UCharacterMovementComponent* movement = GetCharacterMovement();
@@ -97,37 +140,35 @@ void AHallucinationCharacter::StartSprint()
 	}
 }
 
-void AHallucinationCharacter::CheckStemina()
-{
-	UWorld* world = GetWorld();
-	check(world);
-
-	if (IsRunning)
-	{
-		Stemina -= world->DeltaTimeSeconds * SteminaConsumptionRate;
-		if (Stemina <= 0.0f)
-		{
-			IsExhaused = true;
-			EndSprint();
-		}
-	}
-	else
-	{
-		float newStemina = Stemina + world->DeltaTimeSeconds * SteminaRecoveryRate;
-		Stemina = newStemina < MaxStemina ? newStemina : MaxStemina;
-		if (IsExhaused && Stemina >= SteminaRecoveryThreshold)
-		{
-			IsExhaused = false;
-		}
-	}
-}
-
 void AHallucinationCharacter::EndSprint()
 {
 	UCharacterMovementComponent* movement = GetCharacterMovement();
 	check(movement);
 	movement->MaxWalkSpeed = WalkSpeed;
 	IsRunning = false;
+}
+
+void AHallucinationCharacter::StartHoldBreath()
+{
+	if (IsHoldingBreath || IsExhaused) return;
+	
+	UWorld* world = GetWorld();
+	check(world);
+
+	IsHoldingBreath = true;
+	UGameplayStatics::PlaySound2D(world, SB_Inhale);
+}
+
+void AHallucinationCharacter::EndHoldBreath()
+{
+	if (!IsHoldingBreath) return;
+	
+	UWorld* world = GetWorld();
+	check(world);
+
+	IsHoldingBreath = false;
+	USoundBase* soundToPlay = IsExhaused ? SB_ExhaleStrong : SB_Exhale;
+	UGameplayStatics::PlaySound2D(world, soundToPlay);
 }
 
 void AHallucinationCharacter::SetPostProcessParameter()
