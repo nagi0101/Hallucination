@@ -189,9 +189,35 @@ void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface*
 	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
 	FirstPersonCameraComponent->AddOrUpdateBlendable(DynamicMaterial);
 }
-void AHallucinationCharacter::Pickup()
+FHitResult AHallucinationCharacter::Pickup()
 {
-	
+	FVector start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector() * 500.0f;
+	FVector end = start + cameraForwardVector;
+	FHitResult hit;
+	FCollisionQueryParams traceParams;
+	if (!PhysicsHandle) return hit;
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Pickup"));
+	if (GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility, traceParams)) {
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("On pickup"));
+		UPrimitiveComponent* hitComponent = hit.GetComponent();
+		FVector hitLocation = hitComponent->GetComponentLocation();
+		hitComponent->WakeRigidBody();
+		PhysicsHandle->GrabComponentAtLocation(hitComponent, "None", hitLocation);
+		IsGrabbing = true;
+	}
+	return hit;
+}
+
+void AHallucinationCharacter::Throw() {
+	if (!PhysicsHandle) return;
+	UPrimitiveComponent* grabbedComp = PhysicsHandle->GetGrabbedComponent();
+	if (!grabbedComp) return;
+	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
+
+	grabbedComp->AddImpulse(cameraForwardVector * 1000.0f, NAME_None, true);
+	IsGrabbing = false;
+	PhysicsHandle->ReleaseComponent();
 }
 
 //////////////////////////////////////////////////////////////////////////// Input

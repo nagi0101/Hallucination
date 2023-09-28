@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine.h"
 #include "GameFramework/Character.h"
 #include "HallucinationCharacter.generated.h"
 
@@ -29,6 +30,9 @@ class AHallucinationCharacter : public ACharacter
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	UPhysicsHandleComponent* PhysicsHandle;
 
 private:
 	/** Movement */
@@ -64,6 +68,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Breath, meta = (AllowPrivateAccess = "true"))
 	bool IsHoldingBreath;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ability, meta = (AllowPrivateAccess = "true"))
+	bool IsGrabbing;
 
 	/** Camera Shake */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
@@ -118,7 +125,10 @@ private:
 	void EndHoldBreath();
 
 	UFUNCTION(BlueprintCallable, Category = Ability)
-	void Pickup();
+	FHitResult Pickup();
+
+	UFUNCTION(BlueprintCallable, Category = Ability)
+	void Throw();
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();
