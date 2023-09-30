@@ -69,8 +69,17 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Breath, meta = (AllowPrivateAccess = "true"))
 	bool IsHoldingBreath;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ability, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	bool IsGrabbing;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	bool onPushingAndPulling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	FVector2D disToObject;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	AActor* interactedObject;
 
 	/** Camera Shake */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
@@ -124,11 +133,18 @@ private:
 	UFUNCTION(BlueprintCallable, Category = Breath)
 	void EndHoldBreath();
 
-	UFUNCTION(BlueprintCallable, Category = Ability)
-	FHitResult Pickup();
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void Interact();
 
-	UFUNCTION(BlueprintCallable, Category = Ability)
+	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void Throw();
+
+	void Pickup(FHitResult hit);
+
+	void Putdown();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void PushAndPull(FVector direction, float scale);
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();
