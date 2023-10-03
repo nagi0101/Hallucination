@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine.h"
 #include "GameFramework/Character.h"
 #include "HallucinationCharacter.generated.h"
 
@@ -30,6 +31,8 @@ class AHallucinationCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	UPhysicsHandleComponent* PhysicsHandle;
 
 private:
 	/** Movement */
@@ -40,25 +43,43 @@ private:
 	float RunSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	float MaxStemina;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	float Stemina;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	float SteminaConsumptionRate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	float SteminaRecoveryRate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	bool IsExhaused;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool IsRunning;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stemina, meta = (AllowPrivateAccess = "true"))
+	float MaxStemina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stemina, meta = (AllowPrivateAccess = "true"))
+	float Stemina;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stemina, meta = (AllowPrivateAccess = "true"))
+	float SteminaConsumptionBreath;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stemina, meta = (AllowPrivateAccess = "true"))
+	float SteminaConsumptionRun;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stemina, meta = (AllowPrivateAccess = "true"))
+	float SteminaRecoveryRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stemina, meta = (AllowPrivateAccess = "true"))
+	bool IsExhaused;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stemina, meta = (AllowPrivateAccess = "true"))
 	float SteminaRecoveryThreshold;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Breath, meta = (AllowPrivateAccess = "true"))
+	bool IsHoldingBreath;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	bool IsGrabbing;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	bool onPushingAndPulling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	FVector2D disToObject;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	AActor* interactedObject;
 
 	/** Camera Shake */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
@@ -70,11 +91,22 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UCameraShakeBase> CS_Run;
 
+	/** Post Effect */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = PostProcessMaterial, meta = (AllowPrivateAccess = "true"))
 	UMaterialInterface* M_Vinyette;
 
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
 	UMaterialInstanceDynamic* MD_Vinyette;
+
+	/** Sound Effect */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
+	USoundBase* SB_Inhale;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
+	USoundBase* SB_ExhaleStrong;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
+	USoundBase* SB_Exhale;
 
 public:
 	AHallucinationCharacter();
@@ -89,14 +121,30 @@ private:
 	UFUNCTION(BlueprintCallable, Category = Movement)
 	void StartSprint();
 
-	UFUNCTION(BlueprintCallable, Category = Movement)
-	void CheckStemina();
+	UFUNCTION(BlueprintCallable, Category = Stemina)
+	void CheckStemina(float deltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = Movement)
 	void EndSprint();
 
-	UFUNCTION(BlueprintCallable, Category = Ability)
-	void Pickup();
+	UFUNCTION(BlueprintCallable, Category = Breath)
+	void StartHoldBreath();
+
+	UFUNCTION(BlueprintCallable, Category = Breath)
+	void EndHoldBreath();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void Interact();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void Throw();
+
+	void Pickup(FHitResult hit);
+
+	void Putdown();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void PushAndPull(FVector direction, float scale);
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();

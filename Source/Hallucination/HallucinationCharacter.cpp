@@ -8,6 +8,8 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/InputSettings.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -36,6 +38,9 @@ AHallucinationCharacter::AHallucinationCharacter()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
+	//PhysicsHandle
+	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
+
 	// Movement
 	UCharacterMovementComponent* movement = GetCharacterMovement();
 	check(movement);
@@ -46,13 +51,33 @@ AHallucinationCharacter::AHallucinationCharacter()
 	Stemina = MaxStemina;
 	IsExhaused = false;
 	IsRunning = false;
-	SteminaConsumptionRate = 20.f;
 	SteminaRecoveryRate = 10.f;
+	SteminaConsumptionRun = 10.f;
+	SteminaConsumptionBreath = 5.f;
 	SteminaRecoveryThreshold = 20.f;
 	// Crouch
 	movement->MaxWalkSpeedCrouched = WalkSpeed / 2.f;
 	movement->GetNavAgentPropertiesRef().bCanCrouch = true;
 	movement->SetCrouchedHalfHeight(GetCapsuleComponent()->GetScaledCapsuleHalfHeight() / 2.f);
+
+	// Camera Shake
+	CS_Idle = nullptr;
+	CS_Run = nullptr;
+	CS_Walk = nullptr;
+
+	// Post Process
+	M_Vinyette = nullptr;
+	MD_Vinyette = nullptr;
+
+	// Breath
+	IsHoldingBreath = false;
+	SB_Inhale = nullptr;
+	SB_Exhale = nullptr;
+	SB_ExhaleStrong = nullptr;
+
+	//Interact
+	IsGrabbing = false;
+	onPushingAndPulling = false;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -85,6 +110,32 @@ void AHallucinationCharacter::SetCameraShake(FVector velocity)
 	controller->ClientPlayCameraShake(cameraShake, 1.0f);
 }
 
+void AHallucinationCharacter::CheckStemina(float deltaTime)
+{
+	float steminaConsumption = 
+		IsRunning * SteminaConsumptionRun + 
+		IsHoldingBreath	* SteminaConsumptionBreath;
+	float deltaStemina = deltaTime * (steminaConsumption > 0.f ? -steminaConsumption : SteminaRecoveryRate);
+	Stemina = FMath::Clamp(Stemina + deltaStemina, 0.f, MaxStemina);
+
+	if (IsExhaused)
+	{
+		if (Stemina >= SteminaRecoveryThreshold)
+		{
+			IsExhaused = false;
+		}
+	}
+	else
+	{
+		if (Stemina <= 0.f)
+		{
+			IsExhaused = true;
+			EndSprint();
+			EndHoldBreath();
+		}
+	}
+}
+
 void AHallucinationCharacter::StartSprint()
 {
 	UCharacterMovementComponent* movement = GetCharacterMovement();
@@ -97,37 +148,35 @@ void AHallucinationCharacter::StartSprint()
 	}
 }
 
-void AHallucinationCharacter::CheckStemina()
-{
-	UWorld* world = GetWorld();
-	check(world);
-
-	if (IsRunning)
-	{
-		Stemina -= world->DeltaTimeSeconds * SteminaConsumptionRate;
-		if (Stemina <= 0.0f)
-		{
-			IsExhaused = true;
-			EndSprint();
-		}
-	}
-	else
-	{
-		float newStemina = Stemina + world->DeltaTimeSeconds * SteminaRecoveryRate;
-		Stemina = newStemina < MaxStemina ? newStemina : MaxStemina;
-		if (IsExhaused && Stemina >= SteminaRecoveryThreshold)
-		{
-			IsExhaused = false;
-		}
-	}
-}
-
 void AHallucinationCharacter::EndSprint()
 {
 	UCharacterMovementComponent* movement = GetCharacterMovement();
 	check(movement);
 	movement->MaxWalkSpeed = WalkSpeed;
 	IsRunning = false;
+}
+
+void AHallucinationCharacter::StartHoldBreath()
+{
+	if (IsHoldingBreath || IsExhaused) return;
+	
+	UWorld* world = GetWorld();
+	check(world);
+
+	IsHoldingBreath = true;
+	UGameplayStatics::PlaySound2D(world, SB_Inhale);
+}
+
+void AHallucinationCharacter::EndHoldBreath()
+{
+	if (!IsHoldingBreath) return;
+	
+	UWorld* world = GetWorld();
+	check(world);
+
+	IsHoldingBreath = false;
+	USoundBase* soundToPlay = IsExhaused ? SB_ExhaleStrong : SB_Exhale;
+	UGameplayStatics::PlaySound2D(world, soundToPlay);
 }
 
 void AHallucinationCharacter::SetPostProcessParameter()
@@ -148,39 +197,115 @@ void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface*
 	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
 	FirstPersonCameraComponent->AddOrUpdateBlendable(DynamicMaterial);
 }
-void AHallucinationCharacter::Pickup()
+
+void AHallucinationCharacter::Interact() {
+	if (onPushingAndPulling) {
+		onPushingAndPulling = false;
+		interactedObject = NULL;
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pushing and Pulling"));
+		return;
+	}
+	if (IsGrabbing) {
+		Putdown();
+		return;
+	}
+	FVector start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector() * 500.0f;
+	FVector end = start + cameraForwardVector;
+	FHitResult hit;
+	FCollisionQueryParams traceParams;
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Interact"));
+	if (GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility, traceParams)) {
+		AActor* hitActor = hit.GetActor();
+		if (hitActor->ActorHasTag("Moveable") && !IsGrabbing) {
+			onPushingAndPulling = true;
+			interactedObject = hit.GetActor();
+			disToObject = FVector2D(interactedObject->GetActorLocation() - GetActorLocation());
+		}
+		else if (hitActor->ActorHasTag("Pickable") && !onPushingAndPulling) {
+			Pickup(hit);
+		}
+	}
+}
+
+void AHallucinationCharacter::Pickup(FHitResult hit)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pickup"));
+	UPrimitiveComponent* hitComponent = hit.GetComponent();
+	FVector hitLocation = hitComponent->GetComponentLocation();
+	hitComponent->WakeRigidBody();
+	PhysicsHandle->GrabComponentAtLocation(hitComponent, "None", hitLocation);
+	IsGrabbing = true;
+}
+
+void AHallucinationCharacter::Putdown() {
+	PhysicsHandle->ReleaseComponent();
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pickup"));
+	IsGrabbing = false;
+}
+
+void AHallucinationCharacter::Throw() {
+	if (!PhysicsHandle) return;
+	UPrimitiveComponent* grabbedComp = PhysicsHandle->GetGrabbedComponent();
+	if (!grabbedComp) return;
+	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
+
+	grabbedComp->AddImpulse(cameraForwardVector * 1000.0f, NAME_None, true);
+	IsGrabbing = false;
+	PhysicsHandle->ReleaseComponent();
+}
+
+void AHallucinationCharacter::PushAndPull(FVector direction, float scale) {
+	//play anim
 	
+	if (interactedObject != NULL) {
+		//debug
+		FString interactedObjectName = GetDebugName(interactedObject);
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pushing and Pulling"));
+		//
+		//when you trigger IA_ForwardBackWard, it not only move player but also hit object
+		AddMovementInput(direction, scale);
+
+		FVector playerLocation = GetActorLocation();
+		FVector objectLocation = interactedObject->GetActorLocation();
+		FVector forward = GetActorForwardVector();
+		FVector2D newLocation = FVector2D(playerLocation.X + disToObject.X, playerLocation.Y + disToObject.Y);
+		UE_LOG(LogTemp, Log, TEXT("playerLocation : %s"), *playerLocation.ToString());
+		UE_LOG(LogTemp, Log, TEXT("objectLocation : %s"), *objectLocation.ToString());
+		UE_LOG(LogTemp, Log, TEXT("dis : %s"), *disToObject.ToString());
+		UE_LOG(LogTemp, Log, TEXT("newLocation : %s"), *newLocation.ToString());
+		interactedObject->SetActorLocation(FVector(newLocation.X, newLocation.Y, objectLocation.Z));
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
 
 void AHallucinationCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// Set up gameplay key bindings
-	check(PlayerInputComponent);
+	//// Set up gameplay key bindings
+	//check(PlayerInputComponent);
 
-	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	//// Bind jump events
+	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	// Bind fire event
-	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &AHallucinationCharacter::OnPrimaryAction);
+	//// Bind fire event
+	//PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &AHallucinationCharacter::OnPrimaryAction);
 
-	// Enable touchscreen input
-	EnableTouchscreenMovement(PlayerInputComponent);
+	//// Enable touchscreen input
+	//EnableTouchscreenMovement(PlayerInputComponent);
 
-	// Bind movement events
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AHallucinationCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &AHallucinationCharacter::MoveRight);
+	//// Bind movement events
+	//PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AHallucinationCharacter::MoveForward);
+	//PlayerInputComponent->BindAxis("Move Right / Left", this, &AHallucinationCharacter::MoveRight);
 
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "Mouse" versions handle devices that provide an absolute delta, such as a mouse.
-	// "Gamepad" versions are for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AHallucinationCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AHallucinationCharacter::LookUpAtRate);
+	//// We have 2 versions of the rotation bindings to handle different kinds of devices differently
+	//// "Mouse" versions handle devices that provide an absolute delta, such as a mouse.
+	//// "Gamepad" versions are for devices that we choose to treat as a rate of change, such as an analog joystick
+	//PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
+	//PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
+	//PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AHallucinationCharacter::TurnAtRate);
+	//PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AHallucinationCharacter::LookUpAtRate);
 }
 
 void AHallucinationCharacter::OnPrimaryAction()
