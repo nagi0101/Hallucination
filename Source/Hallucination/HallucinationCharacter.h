@@ -96,6 +96,9 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = HP, meta = (AllowPrivateAccess = "true"))
 	float LastDamaged;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HP, meta = (AllowPrivateAccess = "true"))
+	bool isDead;
+
 	/* Interact */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	bool IsGrabbing;
@@ -192,6 +195,10 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void CheckHP(float deltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = HP)
+	void Die();
+
 public:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)

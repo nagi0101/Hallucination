@@ -95,6 +95,7 @@ AHallucinationCharacter::AHallucinationCharacter()
 	HPRecoveryRate = 20.f;
 	HPRecoveryCooltime = 5.f;
 	LastDamaged = 0.0f;
+	isDead = false;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -244,11 +245,21 @@ void AHallucinationCharacter::CheckHP(float deltaTime)
 	UWorld* world = GetWorld();
 	check(world);
 
-	bool recoverHPFlag = HP < MaxHP && world->TimeSince(LastDamaged) >= HPRecoveryCooltime;
+	bool recoverHPFlag = HP < MaxHP && !isDead && world->TimeSince(LastDamaged) >= HPRecoveryCooltime;
 	if (recoverHPFlag)
 	{
 		HP = FMath::Clamp(HP + HPRecoveryRate * deltaTime, 0.f, MaxHP);
 	}
+
+	if (!isDead && HP <= 0.f)
+	{
+		Die();
+	}
+}
+
+void AHallucinationCharacter::Die()
+{
+	isDead = true;
 }
 
 void AHallucinationCharacter::Interact() {
