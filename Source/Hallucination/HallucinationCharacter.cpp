@@ -78,6 +78,13 @@ AHallucinationCharacter::AHallucinationCharacter()
 	//Interact
 	IsGrabbing = false;
 	onPushingAndPulling = false;
+	
+	// HP
+	MaxHP = 100.f;
+	HP = MaxHP;
+	HPRecoveryRate = 20.f;
+	HPRecoveryCooltime = 5.f;
+	LastDamaged = 0.0f;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -85,9 +92,8 @@ void AHallucinationCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	// PostProcess
-	SetPostProcessMaterialInstance(M_Vinyette, MD_Vinyette);
-	SetPostProcessParameter();
+	SetPostProcessMaterialInstance(M_Blood, &MD_Blood);
+	SetPostProcessMaterialInstance(M_Vinyette, &MD_Vinyette);
 }
 
 void AHallucinationCharacter::SetCameraShake(FVector velocity)
@@ -182,20 +188,57 @@ void AHallucinationCharacter::EndHoldBreath()
 void AHallucinationCharacter::SetPostProcessParameter()
 {
 	float steminaRate = Stemina / MaxStemina;
-	
-	float vinyetteStart = 0.2f * steminaRate + 0.1f * (1 - steminaRate);
-	float vinyetteEnd = 1.f * steminaRate + 0.8f * (1 - steminaRate);
-	float vinyetteMax = 0.8f * steminaRate + 0.9f * (1 - steminaRate);
+	auto vinyetteProperties = TArray<FDynamicMaterialScalarProperty>
+	{
+		{"VinyetteStart", FMath::Lerp(0.1f, 0.2f, steminaRate)},
+		{"VinyetteEnd", FMath::Lerp(0.8f, 1.f, steminaRate)},
+		{"VinyetteMax", FMath::Lerp(0.9f, 0.8f, steminaRate)}
+	};
+	SetPostProcessScalarParameters(MD_Vinyette, vinyetteProperties);
 
-	MD_Vinyette->SetScalarParameterValue("VinyetteStart", vinyetteStart);
-	MD_Vinyette->SetScalarParameterValue("VinyetteEnd", vinyetteEnd);
-	MD_Vinyette->SetScalarParameterValue("VinyetteMax", vinyetteMax);
+	float HPRate = HP / MaxHP;
+	auto bloodProperties = TArray<FDynamicMaterialScalarProperty>
+	{
+		{"BloodStart", FMath::Lerp(0.f, 1.f, HPRate)},
+		{"PulseFrequency", FMath::Lerp(2.f, 0.1f, HPRate)},
+		{"PulseMax", FMath::Lerp(0.5f, 0.0f, HPRate)},
+	};
+	SetPostProcessScalarParameters(MD_Blood, bloodProperties);
 }
 
-void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface* &Material, UMaterialInstanceDynamic* &DynamicMaterial)
+void AHallucinationCharacter::SetPostProcessScalarParameters(UMaterialInstanceDynamic*& DynamicMaterial, TArray<FDynamicMaterialScalarProperty>& PropertiesInfo)
 {
-	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
-	FirstPersonCameraComponent->AddOrUpdateBlendable(DynamicMaterial);
+	for (auto propertyInfo : PropertiesInfo)
+	{
+		DynamicMaterial->SetScalarParameterValue(propertyInfo.Name, propertyInfo.Value);
+	}
+}
+
+void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface*& Material, UMaterialInstanceDynamic** DynamicMaterialOut, float weight)
+{
+	*DynamicMaterialOut = UMaterialInstanceDynamic::Create(Material, this);
+	FirstPersonCameraComponent->AddOrUpdateBlendable(*DynamicMaterialOut, weight);
+}
+
+void AHallucinationCharacter::Damage(float damage)
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	HP = FMath::Max(0.f, HP - damage);
+	LastDamaged = world->TimeSeconds;
+}
+
+void AHallucinationCharacter::CheckHP(float deltaTime)
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	bool recoverHPFlag = HP < MaxHP && world->TimeSince(LastDamaged) >= HPRecoveryCooltime;
+	if (recoverHPFlag)
+	{
+		HP = FMath::Clamp(HP + HPRecoveryRate * deltaTime, 0.f, MaxHP);
+	}
 }
 
 void AHallucinationCharacter::Interact() {
