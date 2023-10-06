@@ -231,7 +231,7 @@ void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface*
 	FirstPersonCameraComponent->AddOrUpdateBlendable(*DynamicMaterialOut, weight);
 }
 
-void AHallucinationCharacter::Damage(float damage)
+void AHallucinationCharacter::Damage_Implementation(float damage)
 {
 	UWorld* world = GetWorld();
 	check(world);

@@ -148,6 +148,9 @@ private:
 public:
 	AHallucinationCharacter();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
+	void Damage(float damage);
+
 protected:
 	virtual void BeginPlay();
 
@@ -189,9 +192,6 @@ private:
 	void SetPostProcessScalarParameters(UMaterialInstanceDynamic*& DynamicMaterial, TArray<FDynamicMaterialScalarProperty>& PropertiesInfo);
 
 	void SetPostProcessMaterialInstance(UMaterialInterface*& Material, UMaterialInstanceDynamic** DynamicMaterialOut, float weight = 1.0f);
-
-	UFUNCTION(BlueprintCallable, Category = HP)
-	void Damage(float damage);
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void CheckHP(float deltaTime);
