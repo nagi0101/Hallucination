@@ -259,7 +259,27 @@ void AHallucinationCharacter::CheckHP(float deltaTime)
 
 void AHallucinationCharacter::Die()
 {
+	SpringArm->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+	SpringArm->bUsePawnControlRotation = false;
+	bUseControllerRotationYaw = false;
+	FirstPersonCameraComponent->PostProcessSettings.ColorGradingIntensity = 1.0f;
+	FirstPersonCameraComponent->PostProcessSettings.ColorSaturation = FVector4(0.5f, 0.5f, 0.5f, 1.0f);
+	FirstPersonCameraComponent->PostProcessSettings.ColorContrast= FVector4(2.0f, 2.0f, 2.0f, 1.0f);
+
 	isDead = true;
+}
+
+void AHallucinationCharacter::Revive()
+{
+	bUseControllerRotationYaw = true;
+	SpringArm->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->PostProcessSettings.ColorGradingIntensity = 0.0f;
+	FirstPersonCameraComponent->PostProcessSettings.ColorSaturation = FVector4(1.f, 1.f, 1.f, 1.f);
+	FirstPersonCameraComponent->PostProcessSettings.ColorContrast = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	isDead = false;
+	HP = MaxHP;
+	Stemina = MaxStemina;
 }
 
 void AHallucinationCharacter::Interact() {
