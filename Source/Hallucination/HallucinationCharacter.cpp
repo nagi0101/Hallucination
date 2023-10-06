@@ -23,11 +23,21 @@ AHallucinationCharacter::AHallucinationCharacter()
 	// set our turn rates for input
 	TurnRateGamepad = 45.f;
 
+	// Setup springArm
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(GetCapsuleComponent());
+	SpringArm->TargetArmLength = 0.f;
+	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->bEnableCameraRotationLag = true;
+	SpringArm->CameraLagSpeed = 0.f;
+	SpringArm->CameraRotationLagSpeed = 15.f;
+
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f)); // Position the camera
-	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->SetupAttachment(SpringArm);
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(0.f, 0.f, 0.f)); // Position the camera
+	FirstPersonCameraComponent->bUsePawnControlRotation = false;
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -78,6 +88,14 @@ AHallucinationCharacter::AHallucinationCharacter()
 	//Interact
 	IsGrabbing = false;
 	onPushingAndPulling = false;
+	
+	// HP
+	MaxHP = 100.f;
+	HP = MaxHP;
+	HPRecoveryRate = 20.f;
+	HPRecoveryCooltime = 5.f;
+	LastDamaged = 0.0f;
+	isDead = false;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -85,9 +103,8 @@ void AHallucinationCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	// PostProcess
-	SetPostProcessMaterialInstance(M_Vinyette, MD_Vinyette);
-	SetPostProcessParameter();
+	SetPostProcessMaterialInstance(M_Blood, &MD_Blood);
+	SetPostProcessMaterialInstance(M_Vinyette, &MD_Vinyette);
 }
 
 void AHallucinationCharacter::SetCameraShake(FVector velocity)
@@ -182,20 +199,87 @@ void AHallucinationCharacter::EndHoldBreath()
 void AHallucinationCharacter::SetPostProcessParameter()
 {
 	float steminaRate = Stemina / MaxStemina;
-	
-	float vinyetteStart = 0.2f * steminaRate + 0.1f * (1 - steminaRate);
-	float vinyetteEnd = 1.f * steminaRate + 0.8f * (1 - steminaRate);
-	float vinyetteMax = 0.8f * steminaRate + 0.9f * (1 - steminaRate);
+	auto vinyetteProperties = TArray<FDynamicMaterialScalarProperty>
+	{
+		{"VinyetteStart", FMath::Lerp(0.1f, 0.2f, steminaRate)},
+		{"VinyetteEnd", FMath::Lerp(0.8f, 1.f, steminaRate)},
+		{"VinyetteMax", FMath::Lerp(0.9f, 0.8f, steminaRate)}
+	};
+	SetPostProcessScalarParameters(MD_Vinyette, vinyetteProperties);
 
-	MD_Vinyette->SetScalarParameterValue("VinyetteStart", vinyetteStart);
-	MD_Vinyette->SetScalarParameterValue("VinyetteEnd", vinyetteEnd);
-	MD_Vinyette->SetScalarParameterValue("VinyetteMax", vinyetteMax);
+	float HPRate = HP / MaxHP;
+	auto bloodProperties = TArray<FDynamicMaterialScalarProperty>
+	{
+		{"BloodStart", FMath::Lerp(0.f, 1.f, HPRate)},
+		{"PulseFrequency", FMath::Lerp(2.f, 0.1f, HPRate)},
+		{"PulseMax", FMath::Lerp(0.5f, 0.0f, HPRate)},
+	};
+	SetPostProcessScalarParameters(MD_Blood, bloodProperties);
 }
 
-void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface* &Material, UMaterialInstanceDynamic* &DynamicMaterial)
+void AHallucinationCharacter::SetPostProcessScalarParameters(UMaterialInstanceDynamic*& DynamicMaterial, TArray<FDynamicMaterialScalarProperty>& PropertiesInfo)
 {
-	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
-	FirstPersonCameraComponent->AddOrUpdateBlendable(DynamicMaterial);
+	for (auto propertyInfo : PropertiesInfo)
+	{
+		DynamicMaterial->SetScalarParameterValue(propertyInfo.Name, propertyInfo.Value);
+	}
+}
+
+void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface*& Material, UMaterialInstanceDynamic** DynamicMaterialOut, float weight)
+{
+	*DynamicMaterialOut = UMaterialInstanceDynamic::Create(Material, this);
+	FirstPersonCameraComponent->AddOrUpdateBlendable(*DynamicMaterialOut, weight);
+}
+
+void AHallucinationCharacter::Damage_Implementation(float damage)
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	HP = FMath::Max(0.f, HP - damage);
+	LastDamaged = world->TimeSeconds;
+}
+
+void AHallucinationCharacter::CheckHP(float deltaTime)
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	bool recoverHPFlag = HP < MaxHP && !isDead && world->TimeSince(LastDamaged) >= HPRecoveryCooltime;
+	if (recoverHPFlag)
+	{
+		HP = FMath::Clamp(HP + HPRecoveryRate * deltaTime, 0.f, MaxHP);
+	}
+
+	if (!isDead && HP <= 0.f)
+	{
+		Die();
+	}
+}
+
+void AHallucinationCharacter::Die()
+{
+	SpringArm->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+	SpringArm->bUsePawnControlRotation = false;
+	bUseControllerRotationYaw = false;
+	FirstPersonCameraComponent->PostProcessSettings.ColorGradingIntensity = 1.0f;
+	FirstPersonCameraComponent->PostProcessSettings.ColorSaturation = FVector4(0.5f, 0.5f, 0.5f, 1.0f);
+	FirstPersonCameraComponent->PostProcessSettings.ColorContrast= FVector4(2.0f, 2.0f, 2.0f, 1.0f);
+
+	isDead = true;
+}
+
+void AHallucinationCharacter::Revive()
+{
+	bUseControllerRotationYaw = true;
+	SpringArm->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->PostProcessSettings.ColorGradingIntensity = 0.0f;
+	FirstPersonCameraComponent->PostProcessSettings.ColorSaturation = FVector4(1.f, 1.f, 1.f, 1.f);
+	FirstPersonCameraComponent->PostProcessSettings.ColorContrast = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	isDead = false;
+	HP = MaxHP;
+	Stemina = MaxStemina;
 }
 
 void AHallucinationCharacter::Interact() {
