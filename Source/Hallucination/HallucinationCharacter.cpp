@@ -88,7 +88,7 @@ AHallucinationCharacter::AHallucinationCharacter()
 	//Interact
 	IsGrabbing = false;
 	InteractDistance = 250.0f;
-	onPushingAndPulling = false;
+	OnPushingAndPulling = false;
 
 	//Skill
 	IsSmaller = false;
@@ -287,9 +287,10 @@ void AHallucinationCharacter::Revive()
 }
 
 void AHallucinationCharacter::Interact() {
-	if (onPushingAndPulling) {
-		onPushingAndPulling = false;
+	if (OnPushingAndPulling) {
+		OnPushingAndPulling = false;
 		interactedObject = NULL;
+		PlayAnimMontage(DragEndMontage);
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pushing and Pulling"));
 		return;
 	}
@@ -306,14 +307,16 @@ void AHallucinationCharacter::Interact() {
 	if (GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility, traceParams)) {
 		AActor* hitActor = hit.GetActor();
 		if (hitActor->ActorHasTag("Moveable") && !IsGrabbing) {
-			onPushingAndPulling = true;
+			OnPushingAndPulling = true;
+			PlayAnimMontage(DragStartMontage);
 			interactedObject = hit.GetActor();
+			//GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
 			disToObject = FVector2D(interactedObject->GetActorLocation() - GetActorLocation());
 		}
-		else if (hitActor->ActorHasTag("Pickable") && !onPushingAndPulling) {
+		else if (hitActor->ActorHasTag("Pickable") && !OnPushingAndPulling) {
 			Pickup(hit);
 		}
-		else if (hitActor->ActorHasTag("Usable") && !onPushingAndPulling && !IsGrabbing) {
+		else if (hitActor->ActorHasTag("Usable") && !OnPushingAndPulling && !IsGrabbing) {
 			hitActor->Destroy();
 			SkillToSmaller();
 		}

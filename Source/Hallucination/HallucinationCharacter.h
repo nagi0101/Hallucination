@@ -107,7 +107,16 @@ private:
 	float InteractDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	bool onPushingAndPulling;
+	bool OnPushingAndPulling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	FTimerHandle* timerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DragStartMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DragEndMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	FVector2D disToObject;
