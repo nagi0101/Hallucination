@@ -87,7 +87,12 @@ AHallucinationCharacter::AHallucinationCharacter()
 
 	//Interact
 	IsGrabbing = false;
-	onPushingAndPulling = false;
+	InteractDistance = 250.0f;
+	OnPushingAndPulling = false;
+
+	//Skill
+	IsSmaller = false;
+	MaintainedTimeToSmaller = 10.0f;
 	
 	// HP
 	MaxHP = 100.f;
@@ -113,7 +118,6 @@ void AHallucinationCharacter::SetCameraShake(FVector velocity)
 	APlayerController* controller = GetWorld()->GetFirstPlayerController();
 
 	check(controller != nullptr);
-
 	TSubclassOf<UCameraShakeBase> cameraShake;
 	if (speed == 0.f) {
 		cameraShake = CS_Idle;
@@ -283,9 +287,10 @@ void AHallucinationCharacter::Revive()
 }
 
 void AHallucinationCharacter::Interact() {
-	if (onPushingAndPulling) {
-		onPushingAndPulling = false;
+	if (OnPushingAndPulling) {
+		OnPushingAndPulling = false;
 		interactedObject = NULL;
+		PlayAnimMontage(DragEndMontage);
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pushing and Pulling"));
 		return;
 	}
@@ -294,7 +299,7 @@ void AHallucinationCharacter::Interact() {
 		return;
 	}
 	FVector start = FirstPersonCameraComponent->GetComponentLocation();
-	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector() * 500.0f;
+	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector() * InteractDistance;
 	FVector end = start + cameraForwardVector;
 	FHitResult hit;
 	FCollisionQueryParams traceParams;
@@ -302,12 +307,18 @@ void AHallucinationCharacter::Interact() {
 	if (GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility, traceParams)) {
 		AActor* hitActor = hit.GetActor();
 		if (hitActor->ActorHasTag("Moveable") && !IsGrabbing) {
-			onPushingAndPulling = true;
+			OnPushingAndPulling = true;
+			PlayAnimMontage(DragStartMontage);
 			interactedObject = hit.GetActor();
+			//GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
 			disToObject = FVector2D(interactedObject->GetActorLocation() - GetActorLocation());
 		}
-		else if (hitActor->ActorHasTag("Pickable") && !onPushingAndPulling) {
+		else if (hitActor->ActorHasTag("Pickable") && !OnPushingAndPulling) {
 			Pickup(hit);
+		}
+		else if (hitActor->ActorHasTag("Usable") && !OnPushingAndPulling && !IsGrabbing) {
+			hitActor->Destroy();
+			SkillToSmaller();
 		}
 	}
 }
@@ -320,12 +331,22 @@ void AHallucinationCharacter::Pickup(FHitResult hit)
 	hitComponent->WakeRigidBody();
 	PhysicsHandle->GrabComponentAtLocation(hitComponent, "None", hitLocation);
 	IsGrabbing = true;
+
+	USoundBase* sound= SB_PickUp;
+	//AInteractableActor
+	//(InteractableA)
+	UWorld* world = GetWorld();
+	UGameplayStatics::PlaySound2D(world, sound);
 }
 
 void AHallucinationCharacter::Putdown() {
 	PhysicsHandle->ReleaseComponent();
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pickup"));
 	IsGrabbing = false;
+
+	USoundBase* sound = SB_Putdown;
+	UWorld* world = GetWorld();
+	UGameplayStatics::PlaySound2D(world, sound);
 }
 
 void AHallucinationCharacter::Throw() {
@@ -335,6 +356,9 @@ void AHallucinationCharacter::Throw() {
 	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
 
 	grabbedComp->AddImpulse(cameraForwardVector * 1000.0f, NAME_None, true);
+	
+	//놓은 물체에 다른 액터와 부딪히면 소리나게 만들기
+	//grabbedComp->AttachToComponent();
 	IsGrabbing = false;
 	PhysicsHandle->ReleaseComponent();
 }
@@ -347,6 +371,7 @@ void AHallucinationCharacter::PushAndPull(FVector direction, float scale) {
 		FString interactedObjectName = GetDebugName(interactedObject);
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pushing and Pulling"));
 		//
+		UnCrouch();
 		//when you trigger IA_ForwardBackWard, it not only move player but also hit object
 		AddMovementInput(direction, scale);
 
@@ -359,6 +384,32 @@ void AHallucinationCharacter::PushAndPull(FVector direction, float scale) {
 		UE_LOG(LogTemp, Log, TEXT("dis : %s"), *disToObject.ToString());
 		UE_LOG(LogTemp, Log, TEXT("newLocation : %s"), *newLocation.ToString());
 		interactedObject->SetActorLocation(FVector(newLocation.X, newLocation.Y, objectLocation.Z));
+		USoundBase* sound = SB_Drag;
+		UWorld* world = GetWorld();
+		UGameplayStatics::PlaySound2D(world, sound);
+	}
+}
+
+void AHallucinationCharacter::SkillToSmaller() {
+	if (!IsSmaller) {
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Skill To Smaller"));
+		
+		//anim재생
+		
+		//sound 재생
+		SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
+		USoundBase* sound = SB_DrinkPotion;
+		UWorld* world = GetWorld();
+		UGameplayStatics::PlaySound2D(world, sound);
+		IsSmaller = true;
+
+		//delay
+		//FTimerHandle TimerHandle;
+		//GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+		//{
+		//	actor->SetActorScale3D(FVector(1,1,1));
+		//	IsSmaller = false;
+		//}, 3, false);
 	}
 }
 

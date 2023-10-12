@@ -104,13 +104,32 @@ private:
 	bool IsGrabbing;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	bool onPushingAndPulling;
+	float InteractDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	bool OnPushingAndPulling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	FTimerHandle* timerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DragStartMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* DragEndMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	FVector2D disToObject;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	AActor* interactedObject;
+
+	/* Skill */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill", meta = (AllowPrivateAccess = "true"))
+	bool IsSmaller;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill", meta = (AllowPrivateAccess = "true"))
+	float MaintainedTimeToSmaller;
 
 	/** Camera Shake */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
@@ -144,6 +163,18 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
 	USoundBase* SB_Exhale;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
+	USoundBase* SB_PickUp;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
+	USoundBase* SB_Putdown;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
+	USoundBase* SB_Drag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
+	USoundBase* SB_DrinkPotion;
 
 public:
 	AHallucinationCharacter();
@@ -185,6 +216,9 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void PushAndPull(FVector direction, float scale);
+
+	UFUNCTION(BlueprintCallable, Category = "Skill")
+	void SkillToSmaller();
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();
