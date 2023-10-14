@@ -23,11 +23,21 @@ AHallucinationCharacter::AHallucinationCharacter()
 	// set our turn rates for input
 	TurnRateGamepad = 45.f;
 
+	// Setup springArm
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(GetCapsuleComponent());
+	SpringArm->TargetArmLength = 0.f;
+	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->bEnableCameraRotationLag = true;
+	SpringArm->CameraLagSpeed = 0.f;
+	SpringArm->CameraRotationLagSpeed = 15.f;
+
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f)); // Position the camera
-	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->SetupAttachment(SpringArm);
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(0.f, 0.f, 0.f)); // Position the camera
+	FirstPersonCameraComponent->bUsePawnControlRotation = false;
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -77,7 +87,20 @@ AHallucinationCharacter::AHallucinationCharacter()
 
 	//Interact
 	IsGrabbing = false;
-	onPushingAndPulling = false;
+	InteractDistance = 250.0f;
+	OnPushingAndPulling = false;
+
+	//Skill
+	IsSmaller = false;
+	MaintainedTimeToSmaller = 10.0f;
+	
+	// HP
+	MaxHP = 100.f;
+	HP = MaxHP;
+	HPRecoveryRate = 20.f;
+	HPRecoveryCooltime = 5.f;
+	LastDamaged = 0.0f;
+	isDead = false;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -85,9 +108,8 @@ void AHallucinationCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	// PostProcess
-	SetPostProcessMaterialInstance(M_Vinyette, MD_Vinyette);
-	SetPostProcessParameter();
+	SetPostProcessMaterialInstance(M_Blood, &MD_Blood);
+	SetPostProcessMaterialInstance(M_Vinyette, &MD_Vinyette);
 }
 
 void AHallucinationCharacter::SetCameraShake(FVector velocity)
@@ -96,7 +118,6 @@ void AHallucinationCharacter::SetCameraShake(FVector velocity)
 	APlayerController* controller = GetWorld()->GetFirstPlayerController();
 
 	check(controller != nullptr);
-
 	TSubclassOf<UCameraShakeBase> cameraShake;
 	if (speed == 0.f) {
 		cameraShake = CS_Idle;
@@ -182,26 +203,94 @@ void AHallucinationCharacter::EndHoldBreath()
 void AHallucinationCharacter::SetPostProcessParameter()
 {
 	float steminaRate = Stemina / MaxStemina;
-	
-	float vinyetteStart = 0.2f * steminaRate + 0.1f * (1 - steminaRate);
-	float vinyetteEnd = 1.f * steminaRate + 0.8f * (1 - steminaRate);
-	float vinyetteMax = 0.8f * steminaRate + 0.9f * (1 - steminaRate);
+	auto vinyetteProperties = TArray<FDynamicMaterialScalarProperty>
+	{
+		{"VinyetteStart", FMath::Lerp(0.1f, 0.2f, steminaRate)},
+		{"VinyetteEnd", FMath::Lerp(0.8f, 1.f, steminaRate)},
+		{"VinyetteMax", FMath::Lerp(0.9f, 0.8f, steminaRate)}
+	};
+	SetPostProcessScalarParameters(MD_Vinyette, vinyetteProperties);
 
-	MD_Vinyette->SetScalarParameterValue("VinyetteStart", vinyetteStart);
-	MD_Vinyette->SetScalarParameterValue("VinyetteEnd", vinyetteEnd);
-	MD_Vinyette->SetScalarParameterValue("VinyetteMax", vinyetteMax);
+	float HPRate = HP / MaxHP;
+	auto bloodProperties = TArray<FDynamicMaterialScalarProperty>
+	{
+		{"BloodStart", FMath::Lerp(0.f, 1.f, HPRate)},
+		{"PulseFrequency", FMath::Lerp(2.f, 0.1f, HPRate)},
+		{"PulseMax", FMath::Lerp(0.5f, 0.0f, HPRate)},
+	};
+	SetPostProcessScalarParameters(MD_Blood, bloodProperties);
 }
 
-void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface* &Material, UMaterialInstanceDynamic* &DynamicMaterial)
+void AHallucinationCharacter::SetPostProcessScalarParameters(UMaterialInstanceDynamic*& DynamicMaterial, TArray<FDynamicMaterialScalarProperty>& PropertiesInfo)
 {
-	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
-	FirstPersonCameraComponent->AddOrUpdateBlendable(DynamicMaterial);
+	for (auto propertyInfo : PropertiesInfo)
+	{
+		DynamicMaterial->SetScalarParameterValue(propertyInfo.Name, propertyInfo.Value);
+	}
+}
+
+void AHallucinationCharacter::SetPostProcessMaterialInstance(UMaterialInterface*& Material, UMaterialInstanceDynamic** DynamicMaterialOut, float weight)
+{
+	*DynamicMaterialOut = UMaterialInstanceDynamic::Create(Material, this);
+	FirstPersonCameraComponent->AddOrUpdateBlendable(*DynamicMaterialOut, weight);
+}
+
+void AHallucinationCharacter::Damage_Implementation(float damage)
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	HP = FMath::Max(0.f, HP - damage);
+	LastDamaged = world->TimeSeconds;
+}
+
+void AHallucinationCharacter::CheckHP(float deltaTime)
+{
+	UWorld* world = GetWorld();
+	check(world);
+
+	bool recoverHPFlag = HP < MaxHP && !isDead && world->TimeSince(LastDamaged) >= HPRecoveryCooltime;
+	if (recoverHPFlag)
+	{
+		HP = FMath::Clamp(HP + HPRecoveryRate * deltaTime, 0.f, MaxHP);
+	}
+
+	if (!isDead && HP <= 0.f)
+	{
+		Die();
+	}
+}
+
+void AHallucinationCharacter::Die()
+{
+	SpringArm->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+	SpringArm->bUsePawnControlRotation = false;
+	bUseControllerRotationYaw = false;
+	FirstPersonCameraComponent->PostProcessSettings.ColorGradingIntensity = 1.0f;
+	FirstPersonCameraComponent->PostProcessSettings.ColorSaturation = FVector4(0.5f, 0.5f, 0.5f, 1.0f);
+	FirstPersonCameraComponent->PostProcessSettings.ColorContrast= FVector4(2.0f, 2.0f, 2.0f, 1.0f);
+
+	isDead = true;
+}
+
+void AHallucinationCharacter::Revive()
+{
+	bUseControllerRotationYaw = true;
+	SpringArm->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->PostProcessSettings.ColorGradingIntensity = 0.0f;
+	FirstPersonCameraComponent->PostProcessSettings.ColorSaturation = FVector4(1.f, 1.f, 1.f, 1.f);
+	FirstPersonCameraComponent->PostProcessSettings.ColorContrast = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	isDead = false;
+	HP = MaxHP;
+	Stemina = MaxStemina;
 }
 
 void AHallucinationCharacter::Interact() {
-	if (onPushingAndPulling) {
-		onPushingAndPulling = false;
+	if (OnPushingAndPulling) {
+		OnPushingAndPulling = false;
 		interactedObject = NULL;
+		PlayAnimMontage(DragEndMontage);
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pushing and Pulling"));
 		return;
 	}
@@ -210,7 +299,7 @@ void AHallucinationCharacter::Interact() {
 		return;
 	}
 	FVector start = FirstPersonCameraComponent->GetComponentLocation();
-	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector() * 500.0f;
+	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector() * InteractDistance;
 	FVector end = start + cameraForwardVector;
 	FHitResult hit;
 	FCollisionQueryParams traceParams;
@@ -218,12 +307,18 @@ void AHallucinationCharacter::Interact() {
 	if (GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility, traceParams)) {
 		AActor* hitActor = hit.GetActor();
 		if (hitActor->ActorHasTag("Moveable") && !IsGrabbing) {
-			onPushingAndPulling = true;
+			OnPushingAndPulling = true;
+			PlayAnimMontage(DragStartMontage);
 			interactedObject = hit.GetActor();
+			//GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
 			disToObject = FVector2D(interactedObject->GetActorLocation() - GetActorLocation());
 		}
-		else if (hitActor->ActorHasTag("Pickable") && !onPushingAndPulling) {
+		else if (hitActor->ActorHasTag("Pickable") && !OnPushingAndPulling) {
 			Pickup(hit);
+		}
+		else if (hitActor->ActorHasTag("Usable") && !OnPushingAndPulling && !IsGrabbing) {
+			hitActor->Destroy();
+			SkillToSmaller();
 		}
 	}
 }
@@ -236,12 +331,22 @@ void AHallucinationCharacter::Pickup(FHitResult hit)
 	hitComponent->WakeRigidBody();
 	PhysicsHandle->GrabComponentAtLocation(hitComponent, "None", hitLocation);
 	IsGrabbing = true;
+
+	USoundBase* sound= SB_PickUp;
+	//AInteractableActor
+	//(InteractableA)
+	UWorld* world = GetWorld();
+	UGameplayStatics::PlaySound2D(world, sound);
 }
 
 void AHallucinationCharacter::Putdown() {
 	PhysicsHandle->ReleaseComponent();
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pickup"));
 	IsGrabbing = false;
+
+	USoundBase* sound = SB_Putdown;
+	UWorld* world = GetWorld();
+	UGameplayStatics::PlaySound2D(world, sound);
 }
 
 void AHallucinationCharacter::Throw() {
@@ -251,6 +356,9 @@ void AHallucinationCharacter::Throw() {
 	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
 
 	grabbedComp->AddImpulse(cameraForwardVector * 1000.0f, NAME_None, true);
+	
+	//놓은 물체에 다른 액터와 부딪히면 소리나게 만들기
+	//grabbedComp->AttachToComponent();
 	IsGrabbing = false;
 	PhysicsHandle->ReleaseComponent();
 }
@@ -263,6 +371,7 @@ void AHallucinationCharacter::PushAndPull(FVector direction, float scale) {
 		FString interactedObjectName = GetDebugName(interactedObject);
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pushing and Pulling"));
 		//
+		UnCrouch();
 		//when you trigger IA_ForwardBackWard, it not only move player but also hit object
 		AddMovementInput(direction, scale);
 
@@ -275,6 +384,32 @@ void AHallucinationCharacter::PushAndPull(FVector direction, float scale) {
 		UE_LOG(LogTemp, Log, TEXT("dis : %s"), *disToObject.ToString());
 		UE_LOG(LogTemp, Log, TEXT("newLocation : %s"), *newLocation.ToString());
 		interactedObject->SetActorLocation(FVector(newLocation.X, newLocation.Y, objectLocation.Z));
+		USoundBase* sound = SB_Drag;
+		UWorld* world = GetWorld();
+		UGameplayStatics::PlaySound2D(world, sound);
+	}
+}
+
+void AHallucinationCharacter::SkillToSmaller() {
+	if (!IsSmaller) {
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Skill To Smaller"));
+		
+		//anim재생
+		
+		//sound 재생
+		SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
+		USoundBase* sound = SB_DrinkPotion;
+		UWorld* world = GetWorld();
+		UGameplayStatics::PlaySound2D(world, sound);
+		IsSmaller = true;
+
+		//delay
+		//FTimerHandle TimerHandle;
+		//GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+		//{
+		//	actor->SetActorScale3D(FVector(1,1,1));
+		//	IsSmaller = false;
+		//}, 3, false);
 	}
 }
 
