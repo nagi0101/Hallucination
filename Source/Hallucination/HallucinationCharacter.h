@@ -45,6 +45,10 @@ class AHallucinationCharacter : public ACharacter
 	USpringArmComponent* SpringArm;
 
 private:
+	/**  */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float controllerPitchMin;
+
 	/** Movement */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	float WalkSpeed;
@@ -173,11 +177,41 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SoundEffect, meta = (AllowPrivateAccess = "true"))
 	USoundBase* SB_DrinkPotion;
 
+	/** Dynamic Gravity */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicGravity", meta = (AllowPrivateAccess = "true"))
+	FVector GravityDirection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicGravity", meta = (AllowPrivateAccess = "true"))
+	FVector GravitationalVelocity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DynamicGravity", meta = (AllowPrivateAccess = "true"))
+	float Mass;
+
 public:
 	AHallucinationCharacter();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
 	void Damage(float damage);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "DynamicGravity")
+	void DynamicGravity(FVector Direction);
+
+	UFUNCTION(BlueprintCallable, Category = "DynamicGravity")
+	void SetGravityDirection(FVector Direction);
+
+	FVector GetGravityDirection() const;
+
+	UFUNCTION(BlueprintCallable, Category = "DynamicGravity")
+	FRotator GetGravityRotator() const;
+
+	UFUNCTION(BlueprintCallable, Category = "DynamicGravity")
+	FVector GetGravityRotatedControllForward() const;
+
+	UFUNCTION(BlueprintCallable, Category = "DynamicGravity")
+	FVector GetGravityRotatedControllRight() const;
+
+	UFUNCTION(BlueprintCallable, Category = "DynamicGravity")
+	FVector ProjectToHorizontalPlane(FVector in) const;
 
 protected:
 	virtual void BeginPlay();
