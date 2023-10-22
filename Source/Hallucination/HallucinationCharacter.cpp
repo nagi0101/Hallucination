@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 
+#include "InteractableObjectInterface.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AHallucinationCharacter
@@ -319,6 +320,12 @@ void AHallucinationCharacter::Interact() {
 		else if (hitActor->ActorHasTag("Usable") && !OnPushingAndPulling && !IsGrabbing) {
 			hitActor->Destroy();
 			SkillToSmaller();
+		}
+		else if (hitActor->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass())) {
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interact Object"));
+			// if you use only blueprint for this interface than cast<> will always return nullptr
+			// auto* object = Cast<IInteractableObjectInterface>(hitActor);
+			IInteractableObjectInterface::Execute_InteractThis(hitActor);
 		}
 	}
 }
