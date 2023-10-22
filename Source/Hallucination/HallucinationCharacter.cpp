@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include <Kismet/KismetMathLibrary.h>
+#include "DynamicGravityCharacterComponent.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -104,87 +105,6 @@ AHallucinationCharacter::AHallucinationCharacter()
 	HPRecoveryCooltime = 5.f;
 	LastDamaged = 0.0f;
 	isDead = false;
-
-	// DynamicGravity
-	GravityDirection = { 0.0f, 0.0f, -1.0f };
-	GravitationalVelocity = { 0.0f, 0.0f, 0.0f };
-	movement->GravityScale = 0.0f;
-	bSimGravityDisabled = false;
-	Mass = 100.0f;
-}
-
-void AHallucinationCharacter::DynamicGravity_Implementation(FVector Direction)
-{
-	auto movement = GetCharacterMovement();
-
-	FRotator gravityRotation = GetGravityRotator();
-	FRotator ControllerRotation = Controller->GetControlRotation();
-	ControllerRotation.Pitch = 0.0f;
-	FVector rotatedControllerVector = gravityRotation.RotateVector(ControllerRotation.Vector());
-	FRotator controlledRotation = rotatedControllerVector.Rotation();
-	SetActorRotation(gravityRotation);
-
-	FHitResult hit;
-	float traceLength = GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 10.f;
-	FVector from = GetActorLocation();
-	FVector to = from + GravityDirection * traceLength;
-	GetWorld()->LineTraceSingleByChannel(hit, from, to, ECollisionChannel::ECC_Visibility);
-	if (hit.bBlockingHit && !hit.GetActor()->IsRootComponentMovable())
-	{
-		movement->MovementMode = EMovementMode::MOVE_Walking;
-	}
-	else
-	{
-		movement->MovementMode = EMovementMode::MOVE_Falling;
-	}
-	
-	if (movement->IsFalling())
-	{
-		const float DeltaSeconds = GetWorld()->DeltaTimeSeconds;
-		GravitationalVelocity = Direction * DeltaSeconds * Mass * 9.8;
-		movement->Velocity += GravitationalVelocity;
-	}
-	else
-	{
-		GravitationalVelocity = { 0.0f, 0.0f, 0.0f };
-	}
-}
-
-void AHallucinationCharacter::SetGravityDirection(FVector Direction)
-{
-	GravityDirection = Direction;
-	GravityDirection.Normalize();
-}
-
-FVector AHallucinationCharacter::GetGravityDirection() const
-{
-	return GravityDirection;
-}
-
-FRotator AHallucinationCharacter::GetGravityRotator() const
-{
-	return GetGravityDirection().Rotation() - FVector::DownVector.Rotation();
-}
-
-FVector AHallucinationCharacter::GetGravityRotatedControllForward() const
-{
-	FVector controllForward = GetControlRotation().Vector();
-	return GetGravityRotator().RotateVector(controllForward);
-}
-
-FVector AHallucinationCharacter::GetGravityRotatedControllRight() const
-{
-	FVector controllRight = GetControlRotation().RotateVector(FVector::RightVector);
-	return GetGravityRotator().RotateVector(controllRight);
-}
-
-FVector AHallucinationCharacter::ProjectToHorizontalPlane(FVector in) const
-{
-	FVector gravity = GetGravityDirection();
-	FVector toRight = gravity.Cross(in);
-	FVector projected = toRight.Cross(gravity);
-	projected.Normalize();
-	return projected;
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -246,7 +166,6 @@ void AHallucinationCharacter::CheckStemina(float deltaTime)
 void AHallucinationCharacter::StartSprint()
 {
 	UCharacterMovementComponent* movement = GetCharacterMovement();
-
 	check(movement);
 	if (IsExhaused == false)
 	{
@@ -385,7 +304,8 @@ void AHallucinationCharacter::Interact() {
 		return;
 	}
 	FVector start = FirstPersonCameraComponent->GetComponentLocation();
-	FVector cameraForwardVector = GetGravityRotatedControllForward() * InteractDistance;
+	UDynamicGravityCharacterComponent* gravityComponent = Cast<UDynamicGravityCharacterComponent>(GetComponentByClass(UDynamicGravityCharacterComponent::StaticClass()));
+	FVector cameraForwardVector = gravityComponent->GetGravityRotatedControllForward() * InteractDistance;
 	FVector end = start + cameraForwardVector;
 	FHitResult hit;
 	FCollisionQueryParams traceParams;
