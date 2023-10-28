@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine.h"
 #include "GameFramework/Character.h"
+#include "Components/ArrowComponent.h"
 #include "HallucinationCharacter.generated.h"
 
 class UInputComponent;
@@ -40,6 +41,9 @@ class AHallucinationCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	UPhysicsHandleComponent* PhysicsHandle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	UArrowComponent* InteractionSpot;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArm;
@@ -108,29 +112,26 @@ private:
 	bool IsGrabbing;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	float InteractDistance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	bool OnPushingAndPulling;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* DragStartMontage;
+	float InteractDistance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* DragEndMontage;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	//UAnimMontage* DragStartMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	FVector2D disToObject;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	//UAnimMontage* DragEndMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	AActor* interactedObject;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	UPrimitiveComponent* interactedComp;
+
 	/* Skill */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill", meta = (AllowPrivateAccess = "true"))
-	bool IsSmaller;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill", meta = (AllowPrivateAccess = "true"))
-	float MaintainedTimeToSmaller;
+	bool canControlGravitiy;
 
 	/** Camera Shake */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake, meta = (AllowPrivateAccess = "true"))
@@ -211,15 +212,12 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void Throw();
 
-	void Pickup(FHitResult hit);
+	void Pickup();
 
 	void Putdown();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void PushAndPull(FVector direction, float scale);
-
-	UFUNCTION(BlueprintCallable, Category = "Skill")
-	void SkillToSmaller();
+	void PushAndPull(FVector newLocation);
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();

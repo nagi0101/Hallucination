@@ -13,7 +13,7 @@
 #include <Kismet/KismetMathLibrary.h>
 #include "DynamicGravityCharacterComponent.h"
 
-
+#define D(x) if(GEngine){GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT(x));}
 //////////////////////////////////////////////////////////////////////////
 // AHallucinationCharacter
 
@@ -52,8 +52,12 @@ AHallucinationCharacter::AHallucinationCharacter()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
-	//PhysicsHandle
+	// PhysicsHandle
 	PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
+
+	// Interaction Spot
+	InteractionSpot = CreateDefaultSubobject<UArrowComponent>(TEXT("InteractionSpot"));
+	InteractionSpot->SetupAttachment(GetCapsuleComponent());
 
 	// Movement
 	UCharacterMovementComponent* movement = GetCharacterMovement();
@@ -95,8 +99,7 @@ AHallucinationCharacter::AHallucinationCharacter()
 	OnPushingAndPulling = false;
 
 	//Skill
-	IsSmaller = false;
-	MaintainedTimeToSmaller = 10.0f;
+	canControlGravitiy = false;
 
 	// HP
 	MaxHP = 100.f;
@@ -294,8 +297,14 @@ void AHallucinationCharacter::Revive()
 void AHallucinationCharacter::Interact() {
 	if (OnPushingAndPulling) {
 		OnPushingAndPulling = false;
+		//interactedObject->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		//interactedComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		PhysicsHandle->ReleaseComponent();
+
 		interactedObject = NULL;
-		PlayAnimMontage(DragEndMontage);
+		interactedComp = NULL;
+
+		//PlayAnimMontage(DragEndMontage);
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pushing and Pulling"));
 		return;
 	}
@@ -305,37 +314,103 @@ void AHallucinationCharacter::Interact() {
 	}
 	FVector start = FirstPersonCameraComponent->GetComponentLocation();
 	UDynamicGravityCharacterComponent* gravityComponent = Cast<UDynamicGravityCharacterComponent>(GetComponentByClass(UDynamicGravityCharacterComponent::StaticClass()));
-	FVector cameraForwardVector = gravityComponent->GetGravityRotatedControllForward() * InteractDistance;
+	FVector tempForward = gravityComponent->GetGravityRotatedControllForward();
+	if (gravityComponent->GetGravityDirection().Z >= 0.0f) {
+		tempForward.X *= -1;
+		tempForward.Y *= -1;
+	}
+	FVector cameraForwardVector = tempForward * InteractDistance;
 	FVector end = start + cameraForwardVector;
+	DrawDebugLine(
+		GetWorld(),
+		start,
+		end,
+		FColor(0, 255, 0),
+		false, 1.0f, 0,
+		12.333
+	);
 	FHitResult hit;
 	FCollisionQueryParams traceParams;
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Interact"));
 	if (GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility, traceParams)) {
-		AActor* hitActor = hit.GetActor();
-		if (hitActor->ActorHasTag("Movable") && !IsGrabbing) {
+		//DrawDebugLine(
+		//	GetWorld(),
+		//	start,
+		//	hit.Location,
+		//	FColor(255, 0, 0),
+		//	false, 1.0f, 0,
+		//	12.333
+		//);
+		interactedObject = hit.GetActor();
+		interactedComp = hit.GetComponent();
+		FString hitActor = GetDebugName(interactedObject);
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("Hit actor: %s"), *hitActor));
+		if (interactedObject->ActorHasTag("Moveable") && !IsGrabbing) {
+			UnCrouch();
+			//PlayAnimMontage(DragStartMontage);
+
+						//GetWorld()->GetFirstPlayerController()->GetCharacter()->GetActorLocation();
+
+			FVector playerLocation = RootComponent->GetComponentLocation();
+			FVector objectLocation = interactedComp->GetComponentLocation();
+			
+			float xDist = FMath::Abs(playerLocation.X - objectLocation.X);
+			float yDist = FMath::Abs(playerLocation.Y - objectLocation.Y);
+			FVector dir = (playerLocation - objectLocation);
+			dir.Normalize();
+			FVector newLocation;
+			if (xDist > yDist) {
+				newLocation = FVector(objectLocation.X + dir.X * InteractDistance / 1.5, objectLocation.Y, playerLocation.Z);
+			}
+			else {
+				newLocation = FVector(objectLocation.X, objectLocation.Y + dir.Y * InteractDistance / 1.5, playerLocation.Z);
+			}
+
+			FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(newLocation, objectLocation);
+			//if (gravityComponent->GetGravityDirection().Z >= 0.0f) {
+			//	newRotation.Roll *= -1;
+			//}
+			RootComponent->SetWorldLocation(newLocation);
+			GetWorld()->GetFirstPlayerController()->SetControlRotation(newRotation);
+
+			FVector hitLocation = interactedComp->GetComponentLocation();
+			interactedComp->WakeRigidBody();
+			interactedComp->SetWorldLocation(playerLocation + GetActorForwardVector() * InteractDistance);
+			PhysicsHandle->GrabComponentAtLocation(interactedComp, "None", hitLocation);
+
+			//interactedComp->SetWorldLocation(playerLocation + GetActorForwardVector() * InteractDistance);
+
 			OnPushingAndPulling = true;
-			PlayAnimMontage(DragStartMontage);
-			interactedObject = hit.GetActor();
-			//GetMesh()->GetAnimInstance()->IsAnyMontagePlaying();
-			disToObject = FVector2D(interactedObject->GetActorLocation() - GetActorLocation());
+			//interactedComp->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+			//interactedComp->AttachToComponent(InteractionSpot, FAttachmentTransformRules::KeepWorldTransform);
+
+			//Debug
+			//FString name = GetDebugName(interactedObject->GetAttachParentActor());
+			//D(name.);
+			//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("Attachd to : %s"),*name));
+			//UE_LOG(LogTemp, Log, TEXT("attached to : %s"), *name);
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Pushing and Pulling"));
 		}
-		else if (hitActor->ActorHasTag("Pickable") && !OnPushingAndPulling) {
-			Pickup(hit);
+		else if (interactedObject->ActorHasTag("Pickable") && !OnPushingAndPulling) {
+			Pickup();
 		}
-		else if (hitActor->ActorHasTag("Usable") && !OnPushingAndPulling && !IsGrabbing) {
-			hitActor->Destroy();
-			SkillToSmaller();
+		else if (interactedObject->ActorHasTag("Gravity") && !OnPushingAndPulling && !IsGrabbing) {
+			canControlGravitiy = true;
+			interactedObject->Destroy();
+		}
+		else if (interactedObject->ActorHasTag("Usable") && !OnPushingAndPulling && !IsGrabbing) {
+			interactedObject->Destroy();
+			//SkillToSmaller();
 		}
 	}
 }
 
-void AHallucinationCharacter::Pickup(FHitResult hit)
+void AHallucinationCharacter::Pickup()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pickup"));
-	UPrimitiveComponent* hitComponent = hit.GetComponent();
-	FVector hitLocation = hitComponent->GetComponentLocation();
-	hitComponent->WakeRigidBody();
-	PhysicsHandle->GrabComponentAtLocation(hitComponent, "None", hitLocation);
+	FVector hitLocation = interactedComp->GetComponentLocation();
+	interactedComp->WakeRigidBody();
+	PhysicsHandle->GrabComponentAtLocation(interactedComp, "None", hitLocation);
 	IsGrabbing = true;
 
 	USoundBase* sound= SB_PickUp;
@@ -363,59 +438,47 @@ void AHallucinationCharacter::Throw() {
 
 	grabbedComp->AddImpulse(cameraForwardVector * 1000.0f, NAME_None, true);
 	
-	//놓은 물체에 다른 액터와 부딪히면 소리나게 만들기
-	//grabbedComp->AttachToComponent();
 	IsGrabbing = false;
 	PhysicsHandle->ReleaseComponent();
 }
 
-void AHallucinationCharacter::PushAndPull(FVector direction, float scale) {
+void AHallucinationCharacter::PushAndPull(FVector newLocation) {
 	//play anim
 	
 	if (interactedObject != NULL) {
 		//debug
-		FString interactedObjectName = GetDebugName(interactedObject);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pushing and Pulling"));
-		//
-		UnCrouch();
-		//when you trigger IA_ForwardBackWard, it not only move player but also hit object
-		AddMovementInput(direction, scale);
+		//FString interactedObjectName = GetDebugName(interactedObject);
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, newLocation.ToString());
+		PhysicsHandle->SetTargetLocation(FVector(newLocation.X, newLocation.Y, interactedComp->GetComponentLocation().Z));
+		//interactedComp->SetWorldLocation(newLocation, true,nullptr,ETeleportType::None);
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pushing and Pulling"));
+		//FVector newLocation =
+		//	PhysicsHandle->SetTargetLocation()
+		//FVector currentLocation = GetActorLocation();
+		//interactedObject->SetActorLocation(currentLocation + direction * scale, true);
+		//ddMovementInput(direction, scale);
+		//FVector currentLocation = GetActorLocation();
+		//SetActorLocation(currentLocation + direction * scale, true);
+		//UE_LOG(LogTemp, Log, TEXT("playerLocation : %s"), *currentLocation.ToString());
+		//FVector playerLocation = GetActorLocation();
+		//FVector objectLocation = interactedObject->GetActorLocation();
+		////FVector forward = GetActorForwardVector();
+		//float forwardX = FMath::RoundToFloat(GetActorForwardVector().X);
+		//float forwardY = FMath::RoundToFloat(GetActorForwardVector().Y);
+		//float forwardZ = FMath::RoundToFloat(GetActorForwardVector().Z);
+		//FVector forward = FVector(forwardX, forwardY, forwardZ);
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, forward.ToString());
+		//FVector2D newLocation = FVector2D(playerLocation.X + disToObject.X + 1.0f, playerLocation.Y + disToObject.Y + 1.0f);
+		//UE_LOG(LogTemp, Log, TEXT("playerLocation : %s"), *playerLocation.ToString());
+		//UE_LOG(LogTemp, Log, TEXT("objectLocation : %s"), *objectLocation.ToString());
+		//UE_LOG(LogTemp, Log, TEXT("dis : %s"), *disToObject.ToString());
+		//UE_LOG(LogTemp, Log, TEXT("newLocation : %s"), *newLocation.ToString());
+		//interactedObject->SetActorLocation(FVector(newLocation.X, newLocation.Y, objectLocation.Z),true);
 
-		FVector playerLocation = GetActorLocation();
-		FVector objectLocation = interactedObject->GetActorLocation();
-		FVector forward = GetActorForwardVector();
-		FVector2D newLocation = FVector2D(playerLocation.X + disToObject.X, playerLocation.Y + disToObject.Y);
-		UE_LOG(LogTemp, Log, TEXT("playerLocation : %s"), *playerLocation.ToString());
-		UE_LOG(LogTemp, Log, TEXT("objectLocation : %s"), *objectLocation.ToString());
-		UE_LOG(LogTemp, Log, TEXT("dis : %s"), *disToObject.ToString());
-		UE_LOG(LogTemp, Log, TEXT("newLocation : %s"), *newLocation.ToString());
-		interactedObject->SetActorLocation(FVector(newLocation.X, newLocation.Y, objectLocation.Z));
+
 		USoundBase* sound = SB_Drag;
 		UWorld* world = GetWorld();
 		UGameplayStatics::PlaySound2D(world, sound);
-	}
-}
-
-void AHallucinationCharacter::SkillToSmaller() {
-	if (!IsSmaller) {
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Skill To Smaller"));
-		
-		//anim재생
-		
-		//sound 재생
-		SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
-		USoundBase* sound = SB_DrinkPotion;
-		UWorld* world = GetWorld();
-		UGameplayStatics::PlaySound2D(world, sound);
-		IsSmaller = true;
-
-		//delay
-		//FTimerHandle TimerHandle;
-		//GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
-		//{
-		//	actor->SetActorScale3D(FVector(1,1,1));
-		//	IsSmaller = false;
-		//}, 3, false);
 	}
 }
 
