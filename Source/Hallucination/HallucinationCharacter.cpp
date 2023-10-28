@@ -12,6 +12,7 @@
 #include "DrawDebugHelpers.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "DynamicGravityCharacterComponent.h"
+#include "InteractableObjectInterface.h"
 
 #define D(x) if(GEngine){GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT(x));}
 //////////////////////////////////////////////////////////////////////////
@@ -402,11 +403,11 @@ void AHallucinationCharacter::Interact() {
 			interactedObject->Destroy();
 			//SkillToSmaller();
 		}
-		else if (hitActor->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass())) {
+		else if (interactedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass())) {
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interact Object"));
 			// if you use only blueprint for this interface than cast<> will always return nullptr
 			// auto* object = Cast<IInteractableObjectInterface>(hitActor);
-			IInteractableObjectInterface::Execute_InteractThis(hitActor);
+			IInteractableObjectInterface::Execute_InteractThis(interactedObject);
 		}
 	}
 }
