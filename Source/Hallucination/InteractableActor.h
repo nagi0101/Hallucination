@@ -6,20 +6,29 @@
 #include "GameFramework/Actor.h"
 #include "InteractableActor.generated.h"
 
+class UStaticMeshComponent;
+
 UCLASS()
 class HALLUCINATION_API AInteractableActor : public AActor
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	//UPROPERTY(EditAnywhere)
+	//USceneComponent* DefaultRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* staticMesh;
 
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Sound, meta = (AllowPrivateAccess = "true"))
-	USoundBase* SB_Pickedup;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Sound, meta = (AllowPrivateAccess = "true"))
-	USoundBase* SB_Putdown;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Hit, meta = (AllowPrivateAccess = "true"))
+	bool CanHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Hit, meta = (AllowPrivateAccess = "true"))
+	bool OnHit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Hit, meta = (AllowPrivateAccess = "true"))
+	FTimerHandle hitTimer;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Sound, meta = (AllowPrivateAccess = "true"))
 	USoundBase* SB_Clash;
@@ -31,6 +40,10 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+private:
+	UFUNCTION()
+	void HitMesh(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 public:	
 	// Called every frame
