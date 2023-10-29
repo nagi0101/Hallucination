@@ -316,7 +316,7 @@ void AHallucinationCharacter::Interact() {
 	FVector start = FirstPersonCameraComponent->GetComponentLocation();
 	UDynamicGravityCharacterComponent* gravityComponent = Cast<UDynamicGravityCharacterComponent>(GetComponentByClass(UDynamicGravityCharacterComponent::StaticClass()));
 	FVector tempForward = gravityComponent->GetGravityRotatedControllForward();
-	if (gravityComponent->GetGravityDirection().Z >= 0.0f) {
+	if (gravityComponent->GetGravityDirection().Z > 0.0f) {
 		tempForward.X *= -1;
 		tempForward.Y *= -1;
 	}
@@ -376,7 +376,7 @@ void AHallucinationCharacter::Interact() {
 
 			FVector hitLocation = interactedComp->GetComponentLocation();
 			interactedComp->WakeRigidBody();
-			interactedComp->SetWorldLocation(playerLocation + GetActorForwardVector() * InteractDistance);
+			interactedComp->SetWorldLocation(FVector(FVector2D(playerLocation + GetActorForwardVector() * InteractDistance),hitLocation.Z));
 			PhysicsHandle->GrabComponentAtLocation(interactedComp, "None", hitLocation);
 
 			//interactedComp->SetWorldLocation(playerLocation + GetActorForwardVector() * InteractDistance);
@@ -428,6 +428,7 @@ void AHallucinationCharacter::Pickup()
 }
 
 void AHallucinationCharacter::Putdown() {
+	if (!IsGrabbing) return;
 	PhysicsHandle->ReleaseComponent();
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pickup"));
 	IsGrabbing = false;
@@ -439,6 +440,7 @@ void AHallucinationCharacter::Putdown() {
 
 void AHallucinationCharacter::Throw() {
 	if (!PhysicsHandle) return;
+	if (!IsGrabbing) return;
 	UPrimitiveComponent* grabbedComp = PhysicsHandle->GetGrabbedComponent();
 	if (!grabbedComp) return;
 	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
