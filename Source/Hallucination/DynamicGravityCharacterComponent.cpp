@@ -94,11 +94,16 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 			{
 				UE_LOG(LogTemp, Warning, TEXT("inv slope"));
 				FHitResult swept;
-				GetOwnerCharacter()->AddActorWorldOffset((tangentVec + offset ) * speed * DeltaTime, true, &swept);
-				//if (swept.bBlockingHit)
-				//{
-				//	GetOwnerCharacter()->SetActorLocation(GetOwnerCharacter()->GetActorLocation() * 0.75 + (dzHit.Location - GetGravityDirection() * bound.BoxExtent.Z) * 0.25);
-				//}
+				swept.bStartPenetrating = true;
+				FVector dLoc = tangentVec * speed * DeltaTime;
+				//GetWorld()->LineTraceSingleByChannel(swept, hit.Location, hit.Location + dLoc, ECollisionChannel::ECC_Visibility);
+
+				GetOwnerCharacter()->SetActorLocation(GetOwnerCharacter()->GetActorLocation() + dLoc + offset * speed * DeltaTime, true, &swept);
+				//GetOwnerCharacter()->AddActorWorldOffset((tangentVec + offset) * speed * DeltaTime, true, &swept);
+				if (swept.bBlockingHit)
+				{
+					GetOwnerCharacter()->AddActorWorldOffset(dLoc * (swept.PenetrationDepth * KINDA_SMALL_NUMBER));
+				}
 				UE_LOG(LogTemp, Warning, TEXT("%d"), swept.bBlockingHit);
 			}
 		}
