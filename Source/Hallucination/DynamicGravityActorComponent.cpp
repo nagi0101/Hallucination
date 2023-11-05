@@ -99,7 +99,7 @@ FHitResult UDynamicGravityActorComponent::GetDownLayHit() const
 
 	FHitResult hit;
 	FBoxSphereBounds bound = primitiveComp->Bounds;
-	float traceLength = bound.BoxExtent.Z * 1.2f;
+	float traceLength = bound.BoxExtent.Z * 1.1f;
 	FVector from = primitiveComp->GetComponentLocation();
 	FVector to = from + GravityDirection * traceLength;
 	GetWorld()->LineTraceSingleByChannel(hit, from, to, ECollisionChannel::ECC_Visibility);
