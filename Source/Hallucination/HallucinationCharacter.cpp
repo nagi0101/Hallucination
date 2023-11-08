@@ -301,11 +301,12 @@ void AHallucinationCharacter::CheckHP(float deltaTime)
 	}
 }
 
-void AHallucinationCharacter::Die()
+void AHallucinationCharacter::Die_Implementation()
 {
 	SpringArm->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
 	SpringArm->bUsePawnControlRotation = false;
 	bUseControllerRotationYaw = false;
+	
 	FirstPersonCameraComponent->PostProcessSettings.ColorGradingIntensity = 1.0f;
 	FirstPersonCameraComponent->PostProcessSettings.ColorSaturation = FVector4(0.5f, 0.5f, 0.5f, 1.0f);
 	FirstPersonCameraComponent->PostProcessSettings.ColorContrast= FVector4(2.0f, 2.0f, 2.0f, 1.0f);

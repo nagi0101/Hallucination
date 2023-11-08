@@ -184,6 +184,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
 	void Damage(float damage);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
+	void Die();
+
+
 protected:
 	virtual void BeginPlay();
 
@@ -233,9 +237,6 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void CheckHP(float deltaTime);
-
-	UFUNCTION(BlueprintCallable, Category = HP)
-	void Die();
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void Revive();
