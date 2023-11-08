@@ -52,8 +52,8 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 		FVector from = GetOwner()->GetActorLocation() + dx;
 		FVector to = from + GetGravityDirection() * traceLength;
 		GetWorld()->LineTraceSingleByChannel(dzHit, from, to, ECollisionChannel::ECC_Visibility);
-		DrawDebugLine(GetWorld(), from, to, FColor::Green, false, -1.f, 0, 5.f);
-		DrawDebugLine(GetWorld(), dzHit.Location, dzHit.Location + dzHit.Normal * 50.f, FColor::Blue, false, -1.f, 0, 5.f);
+		//DrawDebugLine(GetWorld(), from, to, FColor::Green, false, -1.f, 0, 5.f);
+		//DrawDebugLine(GetWorld(), dzHit.Location, dzHit.Location + dzHit.Normal * 50.f, FColor::Blue, false, -1.f, 0, 5.f);
 		
 		if (dzHit.bBlockingHit)
 		{
@@ -66,12 +66,11 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 			walkable = movement->GetWalkableFloorAngle() >= relativeSlopeAngle;
 			slopeDown = hit.Normal.Cross(GetGravityDirection().Cross(hit.Normal));
 			slopeDown.Normalize();
-			DrawDebugLine(GetWorld(), hit.Location, hit.Location + hit.Normal * 50.f, FColor::Red, false, -1.f, 0, 5.f);
+			//DrawDebugLine(GetWorld(), hit.Location, hit.Location + hit.Normal * 50.f, FColor::Red, false, -1.f, 0, 5.f);
 
 			// Can't walk on this surface if it is too steep.
 			if (!walkable)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("CAN'T WALK"));
 				Velocity += slopeDown * GetGravitationalAcceleration();
 				FHitResult slopeDownHit;
 				float slopeTraceLength = 100.f;
@@ -86,13 +85,12 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 			float speed = movement->Velocity.Dot(-slopeDown);
 			//FVector offset = GetGravityDirection() * GetOwnerCharacter()->GetActorForwardVector().Dot(GetGravityDirection().Cross(tangentVec).Cross(tangentVec));
 			FVector offset = GetGravityDirection().Cross(tangentVec).Cross(tangentVec);
-			DrawDebugLine(GetWorld(), hit.Location, hit.Location + offset * bound.BoxExtent.Z, FColor::Cyan, false, -1.f, 0, 5.f);
-			DrawDebugLine(GetWorld(), hit.Location, hit.Location + tangentVec * 100.f, FColor::Emerald, false, -1.f, 0, 5.f);
+			//DrawDebugLine(GetWorld(), hit.Location, hit.Location + offset * bound.BoxExtent.Z, FColor::Cyan, false, -1.f, 0, 5.f);
+			//DrawDebugLine(GetWorld(), hit.Location, hit.Location + tangentVec * 100.f, FColor::Emerald, false, -1.f, 0, 5.f);
 
 			// inv slope
 			if (relativeSlopeAngle > 10.f && movement->IsWalkable(hit) != walkable)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("inv slope"));
 				FHitResult swept;
 				swept.bStartPenetrating = true;
 				FVector dLoc = tangentVec * speed * DeltaTime;
@@ -104,7 +102,6 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 				{
 					GetOwnerCharacter()->AddActorWorldOffset(dLoc * (swept.PenetrationDepth * KINDA_SMALL_NUMBER));
 				}
-				UE_LOG(LogTemp, Warning, TEXT("%d"), swept.bBlockingHit);
 			}
 		}
 	}
