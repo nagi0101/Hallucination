@@ -21,7 +21,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CharacterComponent")
 	ACharacter* GetOwnerCharacter() const;
 
-	virtual void DynamicGravity_Implementation(FVector Direction, float DeltaTime) final;
-
 	virtual void ApplyDynamicGravity(FVector Direction, float DeltaTime) final;
 };

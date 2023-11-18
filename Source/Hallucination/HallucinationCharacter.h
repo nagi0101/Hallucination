@@ -115,13 +115,13 @@ private:
 	bool OnPushingAndPulling;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	FVector PushPullDirection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	double DistToObject;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	float InteractDistance;
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	//UAnimMontage* DragStartMontage;
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	//UAnimMontage* DragEndMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	AActor* interactedObject;
@@ -184,8 +184,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
 	void Damage(float damage);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
+	void Die();
+
+
 protected:
 	virtual void BeginPlay();
+
+	virtual void Tick(float DeltaTime);
 
 private:
 	UFUNCTION(BlueprintCallable, Category=CameraShake)
@@ -207,6 +213,9 @@ private:
 	void EndHoldBreath();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
+	bool LineTrace(FHitResult& hit, float dis);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void Interact();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
@@ -217,7 +226,7 @@ private:
 	void Putdown();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void PushAndPull(FVector newLocation);
+	void PushAndPull(float scale);
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();
@@ -228,9 +237,6 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void CheckHP(float deltaTime);
-
-	UFUNCTION(BlueprintCallable, Category = HP)
-	void Die();
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void Revive();
