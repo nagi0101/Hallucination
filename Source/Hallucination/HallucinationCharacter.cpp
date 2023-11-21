@@ -95,9 +95,12 @@ AHallucinationCharacter::AHallucinationCharacter()
 	SB_ExhaleStrong = nullptr;
 
 	//Interact
-	IsGrabbing = false;
+	OnPickup = false;
 	InteractDistance = 250.0f;
 	OnPushingAndPulling = false;
+	ThrowPower = 1000.0f;
+	InteractionText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("InteractionText"));
+	InteractionTextHeight = 30.0f;
 
 	//Skill
 	canControlGravitiy = false;
@@ -125,31 +128,50 @@ void AHallucinationCharacter::BeginPlay()
 void AHallucinationCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	FHitResult hit;
-	if (!IsGrabbing && !OnPushingAndPulling) {
+	if (!OnPickup && !OnPushingAndPulling) {
 		if (LineTrace(hit, InteractDistance)) {
-			if (interactedComp != NULL && hit.GetComponent() != interactedComp) {
-				interactedComp->SetRenderCustomDepth(false);
+			if (InteractedComp != NULL && hit.GetComponent() != InteractedComp) {
+				InteractedComp->SetRenderCustomDepth(false);
 			}
-			interactedObject = hit.GetActor();
-			interactedComp = hit.GetComponent();
-			if (interactedObject->Tags.Num() > 0) {
-				interactedComp->SetRenderCustomDepth(true);
+			InteractedObject = hit.GetActor();
+			InteractedComp = hit.GetComponent();
+			if (InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) {
+				InteractedComp->SetRenderCustomDepth(true);
+				InteractionText->SetText(FText::FromString(TEXT("Press E to Interact")));
+				FVector Size = InteractedComp->GetLocalBounds().GetBox().GetSize();
+				InteractionText->SetWorldLocation(InteractedComp->GetComponentLocation() + FVector(0, 0, Size.Z + InteractionTextHeight));
+				FVector playerLocation = RootComponent->GetComponentLocation();
+				FVector objectLocation = InteractionText->GetComponentLocation();
+				FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(objectLocation, playerLocation);
+				InteractionText->SetWorldRotation(newRotation);
 			}
 			else {
-				if (interactedComp != NULL) {
-					interactedComp->SetRenderCustomDepth(false);
-					interactedComp = NULL;
-					interactedObject = NULL;
+				if (InteractedComp != NULL) {
+					InteractedComp->SetRenderCustomDepth(false);
+
+					InteractionText->SetText(FText::FromString(TEXT("")));
+					InteractionText->SetWorldLocation(GetActorLocation());
+
+
+					InteractedComp = NULL;
+					InteractedObject = NULL;
 				}
 			}
 		}
 		else {
-			if (interactedComp != NULL) {
-				interactedComp->SetRenderCustomDepth(false);
-				interactedComp = NULL;
-				interactedObject = NULL;
+			if (InteractedComp != NULL) {
+				InteractedComp->SetRenderCustomDepth(false);
+
+				InteractionText->SetText(FText::FromString(TEXT("")));
+				InteractionText->SetWorldLocation(GetActorLocation());
+
+				InteractedComp = NULL;
+				InteractedObject = NULL;
 			}
 		}
+	}
+	else {
+		InteractionText->SetText(FText::FromString(TEXT(" ")));
 	}
 }
 
@@ -341,22 +363,27 @@ bool AHallucinationCharacter::LineTrace(FHitResult& hit, float dis) {
 	return GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_Visibility, traceParams);
 }
 
-void AHallucinationCharacter::Interact() {
+void AHallucinationCharacter::InteractWithMouse() {
+	// Do interaction when mouse pressed
 	if (OnPushingAndPulling) {
 		OnPushingAndPulling = false;
-		//interactedObject->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		//interactedComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 		PhysicsHandle->ReleaseComponent();
 
-		interactedObject = NULL;
-		interactedComp = NULL;
+		InteractedObject = NULL;
+		InteractedComp = NULL;
 
 		//PlayAnimMontage(DragEndMontage);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pushing and Pulling"));
+		// 
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pushing and Pulling"));
 		return;
 	}
-	if (IsGrabbing) {
-		Putdown();
+	if (OnPickup) {
+		if (OnDrawParabola) {
+			OnDrawParabola = false;
+		}
+		else {
+			Putdown();
+		}
 		return;
 	}
 	//DrawDebugLine(
@@ -368,67 +395,73 @@ void AHallucinationCharacter::Interact() {
 	//	12.333
 	//);
 	FHitResult hit;
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Interact"));
+	//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Interact"));
 	if (LineTrace(hit, InteractDistance)) {
-		interactedObject = hit.GetActor();
-		interactedComp = hit.GetComponent();
-		if (interactedObject->ActorHasTag("Moveable") && !IsGrabbing) {
+		InteractedObject = hit.GetActor();
+		InteractedComp = hit.GetComponent();
+		if (InteractedObject->ActorHasTag("Moveable") && !OnPickup) {
 			UnCrouch();
 			OnPushingAndPulling = true;
-			interactedComp->Mobility = EComponentMobility::Movable;
+			InteractedComp->Mobility = EComponentMobility::Movable;
 			//PlayAnimMontage(DragStartMontage);
 
 			FVector playerLocation = RootComponent->GetComponentLocation();
-			FVector objectLocation = interactedComp->GetComponentLocation();
+			FVector objectLocation = InteractedComp->GetComponentLocation();
 			FVector dir = (playerLocation - objectLocation);
 			dir.Normalize();
 			PushPullDirection = -dir;
-			FVector meshSize = interactedComp->GetLocalBounds().GetBox().GetSize();
+			FVector meshSize = InteractedComp->GetLocalBounds().GetBox().GetSize();
 			double dist = FMath::Sqrt(FMath::Square(meshSize.X)+FMath::Square(meshSize.Y));
 			DistToObject = dist;
 			FVector newLocation = objectLocation + dir * dist;
 			SetActorLocation(FVector(newLocation.X,newLocation.Y,playerLocation.Z));
 
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Pushing and Pulling"));
+			//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Start Pushing and Pulling"));
 		}
-		else if (interactedObject->ActorHasTag("Pickable") && !OnPushingAndPulling) {
+		else if (InteractedObject->ActorHasTag("Pickable") && !OnPushingAndPulling) {
 			Pickup();
 		}
-		else if (interactedObject->ActorHasTag("Gravity") && !OnPushingAndPulling && !IsGrabbing) {
-			canControlGravitiy = true;
-			interactedObject->Destroy();
-		}
-		else if (interactedObject->ActorHasTag("Usable") && !OnPushingAndPulling && !IsGrabbing) {
-			interactedObject->Destroy();
-			//SkillToSmaller();
-		}
-		else if (interactedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass())) {
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interact Object"));
-			// if you use only blueprint for this interface than cast<> will always return nullptr
-			// auto* object = Cast<IInteractableObjectInterface>(hitActor);
-			IInteractableObjectInterface::Execute_InteractThis(interactedObject);
-		}
+	}
+}
+
+void AHallucinationCharacter::InteractWithKey() {
+	// Do interaction when the key pressed
+	if (InteractedObject->ActorHasTag("Gravity") && !OnPushingAndPulling && !OnPickup) {
+		canControlGravitiy = true;
+		InteractedObject->Destroy();
+	}
+	else if (InteractedObject->ActorHasTag("Locked") && !OnPushingAndPulling && !OnPickup) {
+		InteractString = FString("It's locked");
+	}
+	else if (InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass())) {
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interact Object"));
+		// if you use only blueprint for this interface than cast<> will always return nullptr
+		// auto* object = Cast<IInteractableObjectInterface>(hitActor);
+		IInteractableObjectInterface::Execute_InteractThis(InteractedObject);
 	}
 }
 
 void AHallucinationCharacter::Pickup()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Pickup"));
-	FVector hitLocation = interactedComp->GetComponentLocation();
+	FVector hitLocation = InteractedComp->GetComponentLocation();
 
 	//set component can be movable
-	interactedComp->Mobility = EComponentMobility::Movable;
-	interactedComp->SetSimulatePhysics(true);
-	interactedComp->SetCollisionProfileName("PhysicsActor");
-	interactedComp->WakeRigidBody();
-	PhysicsHandle->GrabComponentAtLocation(interactedComp, "None", hitLocation);
+	InteractedComp->Mobility = EComponentMobility::Movable;
+	InteractedComp->SetSimulatePhysics(true);
+	InteractedComp->BodyInstance.bLockRotation = true;
+	InteractedComp->SetCollisionProfileName("PhysicsActor");
+	InteractedComp->WakeRigidBody();
+	PhysicsHandle->GrabComponentAtLocation(InteractedComp, "None", hitLocation);
 
-	FTimerHandle timer;
-	GetWorld()->GetTimerManager().SetTimer(timer, [&]()
-	{
-			IsGrabbing = true;
-			GetWorld()->GetTimerManager().ClearTimer(timer);
-	}, 0.1f, false);
+	OnPickup = true;
+
+	//FTimerHandle timer;
+	//GetWorld()->GetTimerManager().SetTimer(timer, [&]()
+	//{
+	//		OnPickup = true;
+	//		GetWorld()->GetTimerManager().ClearTimer(timer);
+	//}, 0.1f, false);
 
 	USoundBase* sound= SB_PickUp;
 	UWorld* world = GetWorld();
@@ -436,48 +469,94 @@ void AHallucinationCharacter::Pickup()
 }
 
 void AHallucinationCharacter::Putdown() {
-	if (!IsGrabbing) return;
+	if (!OnPickup) return;
 	PhysicsHandle->ReleaseComponent();
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Pickup"));
-	IsGrabbing = false;
-
-	USoundBase* sound = SB_Putdown;
+	OnPickup = false;
+	/*USoundBase* sound = SB_Putdown;
 	UWorld* world = GetWorld();
-	UGameplayStatics::PlaySound2D(world, sound);
+	UGameplayStatics::PlaySound2D(world, sound);*/
+}
+
+void AHallucinationCharacter::DrawParabola() {
+	FPredictProjectilePathParams projectilePath;
+	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
+	projectilePath.StartLocation = InteractedComp->GetComponentLocation();
+	projectilePath.LaunchVelocity = cameraForwardVector * ThrowPower;
+	projectilePath.bTraceComplex = true;
+	projectilePath.ProjectileRadius = 5.0f;
+	projectilePath.MaxSimTime = 5.0f;
+	projectilePath.bTraceWithChannel = true;
+	projectilePath.TraceChannel = ECollisionChannel::ECC_Visibility;
+	projectilePath.ActorsToIgnore = {GetOwner(),InteractedObject};
+	projectilePath.SimFrequency = 20.0f;
+	projectilePath.OverrideGravityZ = 0;
+	projectilePath.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+	projectilePath.DrawDebugTime = 0.1f;
+	FPredictProjectilePathResult projectilePathResult;
+	UGameplayStatics::PredictProjectilePath(GetWorld(), projectilePath, projectilePathResult);
 }
 
 void AHallucinationCharacter::Throw() {
 	if (!PhysicsHandle) return;
-	if (!IsGrabbing) return;
+	if (!OnPickup) return;
+	if (!OnDrawParabola) {
+		OnDrawParabola = true;
+		return;
+	}
 	UPrimitiveComponent* grabbedComp = PhysicsHandle->GetGrabbedComponent();
 	if (!grabbedComp) return;
 	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
 
-	grabbedComp->AddImpulse(cameraForwardVector * 1000.0f, NAME_None, true);
+	grabbedComp->AddImpulse(cameraForwardVector * ThrowPower, NAME_None, true);
 	
-	IsGrabbing = false;
+	OnPickup = false;
+	OnDrawParabola = false;
 	PhysicsHandle->ReleaseComponent();
 }
 
 void AHallucinationCharacter::PushAndPull(float scale) {
 	//play anim
 	
-	if (interactedComp != NULL) {
+	if (InteractedComp != NULL) {
 		//debug
 		FVector playerLocation = RootComponent->GetComponentLocation();
-		FVector objectLocation = interactedComp->GetComponentLocation();
+		FVector objectLocation = InteractedComp->GetComponentLocation();
 		FVector newLocation = (playerLocation + PushPullDirection * DistToObject);
 
 		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, FString::Printf(TEXT("Player location: %s"), *playerLocation.ToString()));
 		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Object location: %s"), *objectLocation.ToString()));
 		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("New location: %s"), *newLocation.ToString()));
-		interactedComp->SetAllPhysicsLinearVelocity(FVector::Zero());
+		InteractedComp->SetAllPhysicsLinearVelocity(FVector::Zero());
 		newLocation = FMath::VInterpTo(objectLocation, newLocation, GetWorld()->DeltaTimeSeconds, 4.0f);
-		interactedObject->SetActorRelativeLocation(FVector(newLocation.X,newLocation.Y, objectLocation.Z));
+		InteractedObject->SetActorRelativeLocation(FVector(newLocation.X,newLocation.Y, objectLocation.Z));
 
 		USoundBase* sound = SB_Drag;
 		UWorld* world = GetWorld();
 		UGameplayStatics::PlaySound2D(world, sound);
+	}
+}
+
+void AHallucinationCharacter::SetActorDynamicGravity() {
+	FHitResult hit;
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Set Actor Dynamic Gravity"));
+	if (LineTrace(hit, InteractDistance)) {
+		InteractedObject = hit.GetActor();
+
+		UDynamicGravityActorComponent* DynamicGravity = Cast<UDynamicGravityActorComponent>(InteractedObject->FindComponentByClass(UDynamicGravityActorComponent::StaticClass()));
+		
+		if (DynamicGravity == NULL) {
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Can't find Dynamic Gravity on this actor"));
+			return;
+		}
+
+		FVector gravityDir = DynamicGravity->GetGravityDirection();
+		if (gravityDir.Z != -1.0f) {
+			DynamicGravity->SetGravityDirection(FVector(0, 0, -1.0f));
+		}
+		else {
+			DynamicGravity->SetGravityDirection(FVector(0, 0, 1.0f));
+		}
 	}
 }
 

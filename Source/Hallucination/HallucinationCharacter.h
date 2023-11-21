@@ -109,10 +109,16 @@ private:
 
 	/* Interact */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	bool IsGrabbing;
+	bool OnPickup;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	bool OnDrawParabola;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	bool OnPushingAndPulling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	float ThrowPower;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	FVector PushPullDirection;
@@ -124,10 +130,22 @@ private:
 	float InteractDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	AActor* interactedObject;
+	AActor* InteractedObject;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	UPrimitiveComponent* interactedComp;
+	UPrimitiveComponent* InteractedComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	FString InteractString;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	UTextRenderComponent* InteractionText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	float InteractionTextHeight;
+
+
+
 
 	/* Skill */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill", meta = (AllowPrivateAccess = "true"))
@@ -216,17 +234,26 @@ private:
 	bool LineTrace(FHitResult& hit, float dis);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void Interact();
+	void InteractWithMouse();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void Throw();
+	void InteractWithKey();
 
 	void Pickup();
 
 	void Putdown();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void DrawParabola();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void Throw();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void PushAndPull(float scale);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void SetActorDynamicGravity();
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();
