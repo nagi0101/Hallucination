@@ -6,6 +6,8 @@
 #include "Engine.h"
 #include "GameFramework/Character.h"
 #include "Components/ArrowComponent.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "HallucinationCharacter.generated.h"
 
 class UInputComponent;
@@ -119,6 +121,12 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	float ThrowPower;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	USplineComponent* ThrowPath;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	USplineMeshComponent* EndThrowPathMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	FVector PushPullDirection;
@@ -244,7 +252,10 @@ private:
 	void Putdown();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void DrawParabola();
+	FPredictProjectilePathResult DrawParabola();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void DrawSplineArc(FPredictProjectilePathResult PathResult);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void Throw();
