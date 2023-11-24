@@ -99,6 +99,9 @@ AHallucinationCharacter::AHallucinationCharacter()
 	InteractDistance = 250.0f;
 	OnPushingAndPulling = false;
 	ThrowPower = 1000.0f;
+	ThrowPath = CreateDefaultSubobject<USplineComponent>(TEXT("ThrowPath"));
+	EndThrowPathMesh = CreateDefaultSubobject<USplineMeshComponent>(TEXT("EndThrowPathMesh"));
+	EndThrowPathMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	InteractionText = CreateDefaultSubobject<UTextRenderComponent>(TEXT("InteractionText"));
 	InteractionTextHeight = 30.0f;
 
@@ -486,12 +489,12 @@ void AHallucinationCharacter::Putdown() {
 	UGameplayStatics::PlaySound2D(world, sound);*/
 }
 
-void AHallucinationCharacter::DrawParabola() {
+FPredictProjectilePathResult AHallucinationCharacter::DrawParabola() {
 	FPredictProjectilePathParams projectilePath;
 	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
 	projectilePath.StartLocation = InteractedComp->GetComponentLocation();
 	projectilePath.LaunchVelocity = cameraForwardVector * ThrowPower;
-	projectilePath.bTraceComplex = true;
+	projectilePath.bTraceWithCollision = true;
 	projectilePath.ProjectileRadius = 5.0f;
 	projectilePath.MaxSimTime = 5.0f;
 	projectilePath.bTraceWithChannel = true;
@@ -499,10 +502,28 @@ void AHallucinationCharacter::DrawParabola() {
 	projectilePath.ActorsToIgnore = {GetOwner(),InteractedObject};
 	projectilePath.SimFrequency = 20.0f;
 	projectilePath.OverrideGravityZ = 0;
-	projectilePath.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+	projectilePath.DrawDebugType = EDrawDebugTrace::None;
 	projectilePath.DrawDebugTime = 0.1f;
+	projectilePath.bTraceComplex = false;
+
 	FPredictProjectilePathResult projectilePathResult;
 	UGameplayStatics::PredictProjectilePath(GetWorld(), projectilePath, projectilePathResult);
+	return projectilePathResult;
+}
+
+void AHallucinationCharacter::DrawSplineArc(FPredictProjectilePathResult PathResult)
+{
+	// draw line
+	TArray paths = PathResult.PathData;
+	for (int i = 0; i < paths.Num(); i++) {
+		ThrowPath->AddSplinePoint(paths[i].Location, ESplineCoordinateSpace::Local, true);
+	}
+
+	// draw spline mesh at the end
+	/*int lastIdx = paths.Num() - 1;
+	FPredictProjectilePathPointData& lastPoint = paths[lastIdx];
+	ThrowPath->SetSplinePointType(lastIdx, ESplinePointType::CurveClamped, true);
+	EndThrowPathMesh->SetWorldLocation(lastPoint.Location);*/
 }
 
 void AHallucinationCharacter::Throw() {
