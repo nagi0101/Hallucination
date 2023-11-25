@@ -54,6 +54,10 @@
 				"Win64",
 				"Mac"
 			]
+		},
+		{
+			"Name": "Mercuna",
+			"Enabled": true
 		}
 	]
 }

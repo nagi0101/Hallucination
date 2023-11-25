@@ -211,7 +211,7 @@ void AHallucinationCharacter::CheckStemina(float deltaTime)
 		{
 			IsExhaused = false;
 		}
-	}
+	} 
 	else
 	{
 		if (Stemina <= 0.f)
