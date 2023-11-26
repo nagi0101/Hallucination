@@ -459,8 +459,11 @@ void AHallucinationCharacter::Pickup()
 
 	//set component can be movable
 	InteractedComp->Mobility = EComponentMobility::Movable;
+	InteractedComp->BodyInstance.bLockXRotation = true;
+	InteractedComp->BodyInstance.bLockYRotation = true;
+	InteractedComp->BodyInstance.bLockZRotation = true;
+	InteractedComp->SetConstraintMode(EDOFMode::SixDOF);
 	InteractedComp->SetSimulatePhysics(true);
-	InteractedComp->BodyInstance.bLockRotation = true;
 	InteractedComp->SetCollisionProfileName("PhysicsActor");
 	InteractedComp->WakeRigidBody();
 	PhysicsHandle->GrabComponentAtLocation(InteractedComp, "None", hitLocation);

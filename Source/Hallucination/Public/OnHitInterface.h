@@ -24,7 +24,7 @@ public:
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void OnHit(AActor* other);
+	void OnHitEvent(AActor* other);
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void ReportNoise();
