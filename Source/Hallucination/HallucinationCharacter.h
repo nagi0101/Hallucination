@@ -264,6 +264,9 @@ private:
 	void PushAndPull(float scale);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void SetInteractionString(FString newString, float time);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void SetActorDynamicGravity();
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
