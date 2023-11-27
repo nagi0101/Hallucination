@@ -13,6 +13,7 @@
 #include <Kismet/KismetMathLibrary.h>
 #include "DynamicGravityCharacterComponent.h"
 #include "InteractableObjectInterface.h"
+#include "Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h"
 
 #define D(x) if(GEngine){GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT(x));}
 //////////////////////////////////////////////////////////////////////////
@@ -442,7 +443,7 @@ void AHallucinationCharacter::InteractWithKey() {
 		InteractedObject->Destroy();
 	}
 	else if (InteractedObject->ActorHasTag("Locked") && !OnPushingAndPulling && !OnPickup) {
-		InteractString = FString("It's locked");
+		SetInteractionString(FString("It's locked"),1.0f);
 	}
 	else if (InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass())) {
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interact Object"));
@@ -561,11 +562,28 @@ void AHallucinationCharacter::PushAndPull(float scale) {
 		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("New location: %s"), *newLocation.ToString()));
 		InteractedComp->SetAllPhysicsLinearVelocity(FVector::Zero());
 		newLocation = FMath::VInterpTo(objectLocation, newLocation, GetWorld()->DeltaTimeSeconds, 4.0f);
-		InteractedObject->SetActorRelativeLocation(FVector(newLocation.X,newLocation.Y, objectLocation.Z));
+		InteractedObject->SetActorLocation(FVector(newLocation.X,newLocation.Y, objectLocation.Z));
+
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+		UKismetSystemLibrary::MoveComponentTo(InteractedComp, FVector(newLocation.X, newLocation.Y, objectLocation.Z), InteractedComp->GetComponentRotation(), false, false, 0.2f,false, EMoveComponentAction::Type::Move, LatentInfo);
+		//InteractedObject->SetActorLocation
 
 		USoundBase* sound = SB_Drag;
 		UWorld* world = GetWorld();
 		UGameplayStatics::PlaySound2D(world, sound);
+	}
+}
+
+void AHallucinationCharacter::SetInteractionString(FString newString, float time)
+{
+	InteractString = newString;
+	FTimerHandle timer;
+	if (GetWorld()->GetTimerManager().GetTimerRemaining(timer) <= 0) {
+		GetWorld()->GetTimerManager().SetTimer(timer, [&]()
+			{
+				InteractString = "";
+			}, time, false);
 	}
 }
 

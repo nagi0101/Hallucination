@@ -58,6 +58,10 @@
 		{
 			"Name": "Mercuna",
 			"Enabled": true
+		},
+		{
+			"Name": "ElectraPlayer",
+			"Enabled": true
 		}
 	]
 }
