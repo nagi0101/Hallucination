@@ -139,15 +139,10 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 			}
 			InteractedObject = hit.GetActor();
 			InteractedComp = hit.GetComponent();
-			if (InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) {
+			bool HasInterface = InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass());
+			if ((InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) || HasInterface) {
 				InteractedComp->SetRenderCustomDepth(true);
-				InteractionText->SetText(FText::FromString(TEXT("Press E to Interact")));
-				FVector Size = InteractedComp->GetLocalBounds().GetBox().GetSize();
-				InteractionText->SetWorldLocation(InteractedComp->GetComponentLocation() + FVector(0, 0, Size.Z + InteractionTextHeight));
-				FVector playerLocation = RootComponent->GetComponentLocation();
-				FVector objectLocation = InteractionText->GetComponentLocation();
-				FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(objectLocation, playerLocation);
-				InteractionText->SetWorldRotation(newRotation);
+				FloatInteractionDescription("E 키를 눌러 상호작용 하세요");
 			}
 			else {
 				if (InteractedComp != NULL) {
@@ -442,11 +437,8 @@ void AHallucinationCharacter::InteractWithKey() {
 		canControlGravitiy = true;
 		InteractedObject->Destroy();
 	}
-	else if (InteractedObject->ActorHasTag("Locked") && !OnPushingAndPulling && !OnPickup) {
-		SetInteractionString(FString("It's locked"),1.0f);
-	}
 	else if (InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass())) {
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interact Object"));
+		//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Interact Object"));
 		// if you use only blueprint for this interface than cast<> will always return nullptr
 		// auto* object = Cast<IInteractableObjectInterface>(hitActor);
 		IInteractableObjectInterface::Execute_InteractThis(InteractedObject);
@@ -585,6 +577,17 @@ void AHallucinationCharacter::SetInteractionString(FString newString, float time
 				InteractString = "";
 			}, time, false);
 	}
+}
+
+void AHallucinationCharacter::FloatInteractionDescription(FString newString)
+{
+	InteractionText->SetText(FText::FromString(newString));
+	FVector Size = InteractedComp->GetLocalBounds().GetBox().GetSize();
+	InteractionText->SetWorldLocation(InteractedComp->GetComponentLocation() + FVector(0, 0, Size.Z + InteractionTextHeight));
+	FVector playerLocation = RootComponent->GetComponentLocation();
+	FVector objectLocation = InteractionText->GetComponentLocation();
+	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(objectLocation, playerLocation);
+	InteractionText->SetWorldRotation(newRotation);
 }
 
 void AHallucinationCharacter::SetActorDynamicGravity() {

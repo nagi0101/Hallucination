@@ -267,6 +267,9 @@ private:
 	void SetInteractionString(FString newString, float time);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void FloatInteractionDescription(FString newString);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void SetActorDynamicGravity();
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
