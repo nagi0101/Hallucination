@@ -139,6 +139,10 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 			}
 			InteractedObject = hit.GetActor();
 			InteractedComp = hit.GetComponent();
+			if (!Cast<UStaticMeshComponent>(InteractedComp)) {
+				UActorComponent* StaticMeshComp = InteractedObject->GetComponentByClass(UStaticMeshComponent::StaticClass());
+				InteractedComp = Cast<UPrimitiveComponent>(StaticMeshComp);
+			}
 			bool HasInterface = InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass());
 			if ((InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) || HasInterface) {
 				InteractedComp->SetRenderCustomDepth(true);
