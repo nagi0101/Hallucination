@@ -97,9 +97,9 @@ AHallucinationCharacter::AHallucinationCharacter()
 
 	//Interact
 	OnPickup = false;
-	InteractDistance = 250.0f;
+	InteractDistance = 100.0f;
 	OnPushingAndPulling = false;
-	ThrowPower = 1000.0f;
+	ThrowPower = 500.0f;
 	ThrowPath = CreateDefaultSubobject<USplineComponent>(TEXT("ThrowPath"));
 	EndThrowPathMesh = CreateDefaultSubobject<USplineMeshComponent>(TEXT("EndThrowPathMesh"));
 	EndThrowPathMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -139,6 +139,10 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 			}
 			InteractedObject = hit.GetActor();
 			InteractedComp = hit.GetComponent();
+			if (!Cast<UStaticMeshComponent>(InteractedComp)) {
+				UActorComponent* StaticMeshComp = InteractedObject->GetComponentByClass(UStaticMeshComponent::StaticClass());
+				InteractedComp = Cast<UPrimitiveComponent>(StaticMeshComp);
+			}
 			bool HasInterface = InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass());
 			if ((InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) || HasInterface) {
 				InteractedComp->SetRenderCustomDepth(true);
@@ -534,7 +538,16 @@ void AHallucinationCharacter::Throw() {
 	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
 
 	grabbedComp->AddImpulse(cameraForwardVector * ThrowPower, NAME_None, true);
-	
+
+	InteractedComp->BodyInstance.bLockXRotation = false;
+	InteractedComp->BodyInstance.bLockYRotation = false;
+	InteractedComp->BodyInstance.bLockZRotation = false;
+	InteractedComp->SetConstraintMode(EDOFMode::Default);
+	double xTorque = FMath::RandRange(100, 500);
+	double yTorque = FMath::RandRange(100, 500);
+	double zTorque = FMath::RandRange(100, 500);
+	grabbedComp->AddTorqueInRadians(FVector(xTorque,yTorque,zTorque), NAME_None, true);
+
 	OnPickup = false;
 	OnDrawParabola = false;
 	PhysicsHandle->ReleaseComponent();
@@ -581,6 +594,7 @@ void AHallucinationCharacter::SetInteractionString(FString newString, float time
 
 void AHallucinationCharacter::FloatInteractionDescription(FString newString)
 {
+	check(InteractionText);
 	InteractionText->SetText(FText::FromString(newString));
 	FVector Size = InteractedComp->GetLocalBounds().GetBox().GetSize();
 	InteractionText->SetWorldLocation(InteractedComp->GetComponentLocation() + FVector(0, 0, Size.Z + InteractionTextHeight));
