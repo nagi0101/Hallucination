@@ -1,0 +1,771 @@
+=== Release Notes ===
+
+== Version 2.7.5 (20/10/2023) ==
+* Ground navigation
+ * Multiple fixes and improvements to handling of partial paths, especially over rough terrain
+ * Fix issue where cutting out stationary obstacles caused nearby modifier volumes to be incorrectly applied
+ * Fix agent height being inconsistent due to incorrect serialization
+ * Fix certain points not being generated on grid on nav grid EQS query
+ * Fix crash when running an EQS reachability test from multiple sources
+ * Fix crash in NavGrid blueprints when editing agent type properties
+ * Fix occasional crash when adding nav links on generation box boundaries
+ * Improved logging and diagnostics on assertion failures in nav grid query functions
+* 3D Navigation
+ * Performance improvements for Octree building and merging
+* Common
+ * Prioritise pathfind requests and reachability queries over nav grid builds
+ * Fix crash when generating nav graphs with multiple overlapping selections loaded in world partition maps
+
+== Version 2.7.4 (05/10/2023) ==
+* Ground navigation
+ * Improvements and fixes to generation of automated jump links
+ * Agents with Avoidance Mode set to None no longer try to avoid Stationary Obstacles
+ * Fix crash when generating nav grid over rough terrain for an extremely large agent
+ * Fix some causes of path mismatch between poly mesh path and nav grid path
+ * Fix for occasional assert in nav grid IsReachable tests
+ * Fix for occasional assert when finding a partial path
+* 3D navigation
+ * Improve Octree save time for large maps using World Partition
+ * Fix assert during asynchronous octree load
+* Common
+ * Fix possible duplication of nav graph chunks in World Partition maps
+ * Minor fixes and improvements
+ 
+== Version 2.7.3 (25/09/2023) ==
+* Ground navigation
+  * Improve the accuracy of the end point of partial paths
+  * Fix occasional assert when finding a partial path to a position in an unnavigable modifier volume
+  * Fix occasional failing pathfinds through very high cost modifier volumes
+  * Add detailed logging of the nav grid build that can be turned on when doing a new engine integration
+  * Minor fix to jump rail position picking
+* Common
+  * Fix assert when asynchronously loading a nav graph
+  * Minor improvements to logging
+
+== Version 2.7.2 (19/09/2023) ==
+* Ground navigation
+  * Fix crash when building the smooth path for characters going around a U-turn
+  * Fix path incorrectly taking a straight line to destination if starting in high cost space
+  * Fix rare assert when rebuilding a path over very rough terrain
+  * Fix crash when exiting play mode while rebuilding modifier volume changes
+* Common
+  * When using TrackActor, turn avoidance off against the target actor by default
+  * Fix crash when using trails debug draw
+
+== Version 2.7.1 (11/09/2023) ==
+* Ground navigation
+  * Fix assert when auto generating jump links for rectangular agents
+* Common
+  * Fix path following incorrectly completing while path is being extended
+
+== Version 2.7.0 (05/09/2023) ==
+* Ground navigation
+  * Auto generated jump links and jump link following for characters and animals (editor generation only)
+  * Add EQS queries to generate points in a grid on the nav grid
+  * API to request nearby polymesh edges and closest point on edge of polymesh
+  * Option to clamp destination points on Unreal EQS reachable and path length tests
+  * Support acceleration based path following for character movement (Unreal)
+  * Exclude cells from the nav grid if they aren't reachable from any valid orientation
+  * Correctly handle arbitrary rotations of stationary obstacles
+  * Minor improvements to context steering
+  * Fix short paths occasionally taking a circuitous route
+  * Fix assert when changing the destination of a path that ended exactly at the end of a nav link
+  * Fix occasional pathfinding failures related to stationary obstacles
+  * Fix occasional assert when pathing to a position exactly on the edge of a modifier volume or stationary obstacle
+  * Fix possibility of some geometry being missed from the nav grid if a nav invoker present when the level is first loaded
+  * Change the positions passed to the nav link traversal callback to be relative to the nav grid (to avoid threading issues)
+  * Fix decelerating agents continuously falling off their path when needing to reverse direction
+
+* 3D Navigation
+  * Small increase in performance and reduction in memory usage of the octree
+  * Fix paths sometimes not being found through the Octree
+  * Fix hierarchical path find to small isolated region in adjoining octree generation box
+  
+* Common
+  * Support for UE5.3
+  * Integration of Mercuna actor debug draw with Unreal Gameplay Debugger (experimental)
+  * Ability to update various steering parameters without interrupting the current move request
+  * Ability to override speed for the current move request
+  * Option to specify start direction on all agent move requests
+  * Option to specify whether avoidance is performed against destination actor
+  * Improved memory statistics
+  * Allow for different engine threading models accessing the Mercuna APIs
+  * Clarify names of Blueprint "Move To" functions (Unreal)
+  * Add Nav Testing actor PathfindLatent function and option to disable automatic pathing
+  * Fixes for problems related to seamless Unreal Server Travel
+  * Respect active status on Obstacle and Navigation components (Unreal)
+  * When moving to an actor with default end distance, set end distance based on target actor's radius (Unreal)
+  * Fail move request if target is in a different or invalid world (Unreal)
+  * Fix navigation in rotating nav graphs
+  * Improve framework for integrating with different profilers
+  * Respect the NeverSave setting on nav graphs when using Unreal World Partition
+  * Track actor no longer completes immediately if the destination is at the agent's current position
+  * Fix Mercuna being ticked multiple times when there are multiple worlds (Unreal)
+  * Refactor navigation components to make them easier for derived classes to extend (Unreal)
+  * Fix crash when a destination actor is not in a World (Unreal)
+  * Fix rare crash when scheduling a pathfind to an additional destination at the same time as the path is being destroyed
+  * Ability to show Mercuna volumes in game mode (Unreal)
+  * Allow Mercuna Obstacle Component properties to be set through Blueprint (Unreal)
+  * Refactoring and minor fixes and improvements
+
+ == Version 2.6.3 (10/07/2023) ==
+* Ground Navigation
+  * Fix assert when a new path is created during nav link completion
+  * Fix sections of navmesh failing to generatewhen using both stationary obstacles and nav invokers
+* 3D Navigation
+  * Fix bug in rare branch of hierarchical path-find
+* Common
+  * Fix memory corruption in Unreal non-editor non-debug builds of contextual steering
+  * Support for C++ 20
+  * Add missing includes for UE5.2 linux cross compilation
+  
+== Version 2.6.2 (07/06/2023) ==
+* Ground Navigation
+  * Fix possible crash when attempting to follow a nav link that has been deleted
+  * Don't assert when out of memory in avoidance (occasionally possible when trying to avoid more than 45 agents)
+  * Option to ignore step height when considering height clearance required for navigation.  This should only be enabled if level design guarantees there are no steps close to low doorways or in low tunnels.
+  * Fix rare crash in nav link following
+  * Turn more quickly towards the target agent when the path to the target is a straight line
+  * Reduce aggression of vehicle driving in UE5 to ensure all wheels stay on the ground
+  * Fix rare crash in nav grid build
+* Common
+  * Support for UE5.2
+  * Improve handling of inactive navigation components (Unreal)
+  * Improve context steering performance
+  * Include target actor radius when determining distance from target to stop at (Unreal)
+  * Ability to update track offset while a move is in progress
+  * Prevent the track offset taking an agent the other side of the wall from the agent that it is tracking
+  * Add console command to rebuild part of the nav graph (Unreal)
+  * Fix crash if actor destroyed at runtime while navigation component selected in the editor (Unreal)
+  * Minor fixes
+
+== Version 2.6.1 (13/04/2023) ==
+* Ground navigation
+  * Configurable avoidance weight multipliers for ORCA and context steering
+  * Improve kinematic path smoothing immediately after nav link exit
+  * Fix to stalls when using nav invokers and multiple nav grids
+  * Disable Nav Invoker component at begin play when auto activate is false
+  * Fix track command failing to complete
+  * Fix path shortcutting not always cutting out intermediate points when there is a more direct path to a moving destination
+  * Increase tolerances to work with UE 5.2 vehicle movement model
+  * Fix inconsistent handling of bottom boundary of the nav grid
+  * Paths no longer prefer to use a nav link that ends in the destination polygon if there is a lower cost route to that polygon
+  * Fix to some instances of the multiple outlines error log during nav mesh build
+  * Fix occasional assert in geometry collector when the nav graph is being destroyed while builds are running
+  * Fix rare assert in avoidance when obstacle was precisely on top of the avoider
+  * Fix streaming of chunks that are temporarily unloaded and then reloaded from memory when using world partition
+  * Fix possible assert when rebuilding a nav grid volume with no navigable surfaces
+  * Fix occasional assert in context steering cohesion calculation
+  * Fix small memory leak when performing a kinematic pathfind
+* 3D Navigation
+  * Fix octree search debug draw
+  * Fix rare distance field generation bug where distances from columns of 16 or more unnavigable cells could be considered to be too large
+  * Fix connectivity graph in world partition maps
+* Common
+  * Support for UE5.2 preview releases
+  * Ability to get the requested destination from navigation components
+  * Fix logging on Linux
+  * Add further profiling markers
+  * Various minor fixes and improvements
+  
+== Version 2.6.0 (28/02/2023) ==
+* Ground navigation
+ * Option to cut stationary obstacles out of the nav grid
+ * Context steering for ground based agents (experimental)
+ * Ability to query the future trajectory of Mercuna controlled agents for motion matching, while they are following a path
+ * Improved Nav Grid generation over rough surfaces
+ * Expose a normalized acceleration (similar to a controlled character's LastInputVector) for animation integration
+ * Respect Unreal CharacterMovementComponent model for acceleration on slopes
+ * Expose GetCurrentSpline on MercunaGroundNavigationComponent
+ * Added functions to MercunaNavGraph2D for checking if work is in progress (including nav invoker triggered builds)
+ * Ability to derive from Ground Navigation Component to allow custom movement models
+ * Ability to query avoidance without moving down a Mercuna path, to allow custom movement models
+ * Kinematic pathfind fix for agents trapped in inescapable navgrid cells
+ * Expose RandomInRange point generator function on NavGrid actor
+ * Add option to disable consideration of physical materials when building nav grid
+ * Expose UsageSpec on IsNavigable check on NavGrid actor
+ * Refactored some of the functionality of MercunaNavGrid into new MercunaNavGraph2D base class
+ * Fix avoidance for agents on precipices finding nav mesh far below
+ * Fix avoidance pushing agents into modifier volumes that they are not allowed into
+ * Never repath while traversing a nav link
+ * Fix rare incorrect path shortcutting after nav link
+ * Fix crash with deleted nav link
+ * Fix assert when no agent types are set on a nav grid
+ * Make colour of usage type and surface type mesh debug draw stable
+ * Add option to debug draw nav grid generation boxes
+ * Minor improvement to ORCA obstacle weights
+* 3D Navigation
+ * Context steering for agents navigating in 3D (experimental)
+ * Fix to rare problem in hierarchical pathfinder
+* Common
+ * UE5.1 support
+ * New single threaded mode with long queries time sliced over multiple frames
+ * Improvements to navigation and avoidance when using moving nav graphs
+ * Add support for movement components that are not being ticked every frame (to support LoD)
+ * New Nav Graph Builder commandlet for generating nav graphs as part of overnight builds
+ * Added mer.Logging.Flush console command to force Mercuna log flush
+ * Always flush the Mercuna.log file after making an error log
+ * Changed PCHUsage setting to NoSharedPCHs in Mercuna core modules, to fix adaptive Unreal builds
+ * Refactored internal entity system to separate entities and obstacles - allows for allows multiple obstacle components per actor
+ * Fix crashes when trying to update move destination to an invalid location
+ * Add version of Build to nav graph actors that takes an array of priority positions
+ * Add Unreal Insights markers to Mercuna stats
+ * Ready event for multi-waypoint pathfinds now triggers once the entire path is ready
+ * Fixed dropping a waypoint if AddDestinationPos called quickly in succession
+ * Fixed issue with entity system being ticked multiple times in local multiplayer
+ * Save graph transform in nav graph debug data files
+ * Expanded example integration to demonstrate registration and movement of a character
+ * Changed example integration coordinate axis and units to match Unreal in order to allow Unreal nav graph data files to be loaded
+ * Build fixes for ARM based Macs
+ * Add option to debug draw world partition nav graph chunk boundaries
+ * Improve nav graph error logging 
+ * Various minor fixes and improvements
+
+== Version 2.5.11 (14/11/2022) ==
+* Ground navigation
+ * Fix surface types becoming incorrect when streaming world partition levels at runtime
+ * Fix rare assert due to incorrect links between layers of the polymesh
+ * Fix the limit on minimum cell size to prevent incorrect generation for very large agents
+* Common
+ * UE5.1 Preview support
+ * Fix leak of temporarily loaded objects when building nav graphs in World Partition maps
+ * Log error if collecting a physics mesh with over a million triangles
+ * Fix crash when attempting to read values from a spline after the path has completed
+ * Fix paths being incorrectly terminated on world origin shifts 
+
+== Version 2.5.10 (06/10/2022) ==
+* Common
+ * Fix compile error in UE5 non-unity builds due to missing header
+ * Fix rare crash on shutdown due to build jobs not being cancelled
+* Ground navigation
+ * Fix height range in clamp to navigable when search range is zero
+ * Fix occasional crash in RandomInRange due to locking issue
+
+== Version 2.5.9 (14/09/2022) ==
+* Common
+ * Reduction in main thread CPU time used during nav graph build
+ * Add configurable limit on the main thread CPU time that can be used each frame for geometry collection
+ * Fix rare nav graph build failure introduced in 2.5.8 due to accessing a WeakPtr off the main thread
+ * Improve performance of building large nav graphs, and building nav graph in completely empty space
+ * Ignore actors that are being destroyed when building the nav graph
+ * Fix rare assert when building the curve an agent should move along
+ * Fix rare crash in job system
+* Ground navigation
+ * Fix AMeruncNavGrid::IsBuilt methods returning incorrect values for empty volumes
+ * Improve performance of nav grid streaming for World Partition
+ * Fix path shortcutting occasionally cutting out a loop that was required for an agent to turn around at the start of a path
+ * Expose the desired look direction on the Ground Navigation component
+* 3D Navigation
+ * Fix case where agent falls off its path when the destination is changed while it is moving
+
+== Version 2.5.8 (23/08/2022) ==
+* Common
+ * Fix nav graph generation for instanced static meshes with multiple physical materials (UE5 only)
+ * Fix nav graph runtime build performance in cases where navigation components are present in multiple different nav volumes
+ * Fix crash when attempting to build a nav graph with a zero size nav volume
+
+== Version 2.5.7 (17/08/2022) ==
+* Ground navigation
+ * Fix crash when deleting a nav link and saving the level without rebuilding the nav grid
+* Common
+ * Move the physics queries used by geometry collection when building the nav graph off the main thread
+ * Improve performance of collecting the geometry for instanced static meshes, reducing nav graph build time
+ * Fix crash when clearing the destination location for a running Mercuna MoveTo BT task
+ * Log information about the physics configuration to Mercuna.log on initialization
+
+== Version 2.5.6 (28/07/2022) ==
+* Ground navigation
+ * Fix problem where sufficiently tall obstacles were not considered by avoidance
+ * Fix path shortcutting after a nav link, previously the path immediately after the end of a nav link could cut through geometry
+ * Fix path shortcutting when the end of a path was on a slope directly above or below a navigable surface that was in line of sight from the previous path point
+ * Fix crash when Mercuna navigation or obstacle component was added to an actor with no movement component
+ * Fix crash when Mercuna navigation is configured on a vehicle that doesn't have 4 wheels
+ * Fix occasional failure in project to navigable in the case the point is extremely close to or on the surface
+ * Fix reachability test incorrectly passing for a location that was close to the x-y coordinates of the start location but at a different height
+* Common
+ * Fix cooking of nav graph data chunks for world partition
+
+== Version 2.5.5 (11/07/2022) ==
+* Ground navigation
+ * Fix handling of surface types when loading world partition data chunks
+ * Fix problem with nav invokers if the nav volume was spawned at runtime
+ * Fix problem where nav grid data got corrupted if the map was saved during a build in a world partition map
+* Common
+ * Set NetLoadOnClient setting on world partition nav data chunks to be the same as on the nav graph
+ * Option to disable creation of nav data chunks when world partition is in use, so data for the whole map is stored in the nav graph actor
+ * Fix problem where incomplete nav graph data would not be updated if the map was saved during a build in a world partition map
+
+== Version 2.5.4 (24/06/2022) ==
+* Ground navigation
+ * Fix problem loading saved world partition nav grid chunks that was introduced in v2.5.3
+ * Add additional build status calls to the nav grid actor
+ * Fix rare assert in avoidance
+
+== Version 2.5.3 (16/06/2022) ==
+* Ground navigation
+ * Improve performance when saving nav grids in world partition maps
+ * Improve nav grid build performance for large empty regions within volumes
+ * Remove logging messages from non-debug builds that were causing performance issues when merging and purging sections of nav grid
+ * Reduce memory usage of nav grids for empty regions in nav volumes
+
+== Version 2.5.2 (03/06/2022) ==
+* Ground navigation
+ * Fixed some asserts in ORCA avoidance
+ * Fixed an off by one error that would allow the minimum distance of the nav grid to a ledge to be too small when the ledge margin is set to default
+ * Fix nav links being skipped if the start point of the nav link, is at the very start of the path
+ * Fix occasional assert when a nav link is completed immediately
+ * Improve kinematic pathfinding through nav links
+* 3D Navigation
+ * Fixed MercunaObstacle to work correctly with any movement component derived from IMercuna3DMovementInterface, not just the Mercuna implementation.
+* Common
+ * Fix geometry collection for Instanced Static Meshes at very large distances from the origin (UE5)
+ * Fix occasional UE5 only crash in PostLoad due to World pointer now sometimes now being null
+ * Fix crash due to leaking NavVolumes with UE5 World Partition
+ * Fixed a rare division by zero in the smooth path follower
+ * Fail rather than assert if zero or negative size nav volumes are configured
+
+== Version 2.5.1 (04/05/2022) ==
+* Ground Navigation
+ * Fixed nav links not being include in nav grid if attached to a parent actor
+ * Improvements to Chaos vehicle path following
+* 3D Navigation
+ * Fixed assert when building nav octrees in Unity
+* Common
+ * New commandlet for building nav graphs in world partition maps
+ * Fixed failure to save nav graph in maps using world partition with streaming disabled
+ * Fixed failure to clean up old Mercuna Nav Data Chunks in world partition maps when a nav graph is rebuilt
+ * Disabled nav graph rotation in maps using world partition
+ * Fixed possible crash caused by nav testing actors trying to find a path during map load
+ * Check nav graph configuration hasn't changed since the nav graph was built
+ * Fixed nav graph debug draw occasionally not being updated
+ * Fixed group editing of ‘Supported Agent Types’ property of nav grid not updating all the selected actors
+ * Fixed nav volumes not getting registered correctly with their nav graph on map load
+ * Scale Unreal nav graph debug materials emission with eye adaptation
+ * Minor logging improvements
+ * Various minor fixes
+
+== Version 2.5.0 (08/04/2022) ==
+* Ground Navigation
+ * Improved simplification when building nav polymesh to reduce the number of polygons in the final mesh
+ * Added a vector offset option to the track actor command
+ * Agents using the CharacterMovementComponent now obey MaxBrakeDeceleration and GroundFriction when slowing down
+ * Add functions to temporarily pause navigation and then resume the previously running command
+ * Fixed borders of nav polymesh debug draw not being drawn relative to moving nav grids
+ * Fixed issue with nav grid layers being incorrectly joined together when the cell size was very large compared to the agent height
+ * Fixed nav invoker always volumes not being built when no nav invokers placed in the level yet
+ * Fix rare assert due to path point duplication in the path straightener
+ * EQS test fixes and minor improvements
+* 3D Navigation
+ * Improve octree build performance when multiple overlapping volumes are built at the same time
+ * Fix shortcutting issue causing the path to collide with geometry when using the deprecated non-smooth path follower
+* Common
+ * Support for UE5.0 release
+ * Experimental support for UE5 World Partition
+ * Change how Mercuna volumes and nav graphs are internally associated
+ * Fixed nav graph rendering bounds being set incorrectly
+ * Add Natvis for Mercuna vector, quaternions and AABB types
+ * Filter out zero size triangles when collecting geometry to improve nav graph build performance
+ * Detect unbuilt hierarchical instanced meshes during nav graph build
+ * Removed RVO library code and replaced with faster linear programming implementation
+ * Fix possible infinite loop when a failed move command immediately triggers another failed move command
+ * Fixed short-cutting bug when using straight paths 
+ * Refactoring, minor fixes and improvements
+* Unity
+ * Updated MSVC toolset to 142 (Visual Studio 2019)
+ * Added menu option to clear the debug actor
+ * Support movement when isKinematic is true on a rigid body component
+ * Added octree building options:
+  * Only include geometry that doesn’t have a rigid body component
+  * Only include geometry from specific layers
+ * Added button to automatically resize the NavVolume component to level geometry
+ * Added option to manually specify the radius of the Mercuna3DNavigation & MercunaObstacle components
+ * Added sphere widget to show the navigation radius
+ * Reduced unnecessary C# memory allocations to improve performance
+ * Fixed issue with multiple nav volumes and modifier volumes with only last one being included
+
+== Version 2.4.5 (02/03/2022) ==
+* Ground navigation
+ * Fix assert when an actor that was being tracked went significantly outside of navigable space
+ * Fix pawn stopping or a crash occurring when a pawn reached the exact position of a zero size actor it was tracking
+ * Fix assert when simplified poly mesh height is signifcantly different from nav grid height when performing a RandomInRange query
+ * Generate grid within nav invoker volumes even if there are no nav invokers present
+* 3D Navigation
+ * Fix problem where pawn never starts moving if acceleration is very low and/or deltaT is very short
+
+== Version 2.4.4 (24/02/2022) ==
+* Common
+ * Support for UE5.0 Preview 1
+ * Experimental support for UE5 large world
+ * Fix for occasional crash on shutdown
+
+== Version 2.4.3 (11/02/2022) ==
+* Ground Navigation
+ * Fixed crash when a nav link is configured to apply to a single nav grid and no nav grid is specified
+ * Fixed occasional incorrect pathfinds due to uninitialised variable
+ * Added method to allow ground agents to change agent type at runtime
+ * Minor debug-draw fixes
+* 3D Navigation
+ * Fixed memory leak during runtime addition of modifier volumes
+ * Fixed incorrect cost multiplier usage on path extensions
+* Common
+ * Added option to allow an obstacle to be disabled for avoidance by default and then overridden for specific entities.
+ * Disabled sliced geometry collection for LandscapeMeshCollision components as not actually supported by UE4
+ * Fix crash when building/rebuilding a portion of a level containing a landscapes when that level is unloaded
+ * Fixed occasional crash when the game is exited while nav graph build/rebuild is in progress
+ * Fixes for warnings found with C++17 and UE5
+ * Prevent negative path lengths being set in the NavTestingActor details panel
+ * Exposed ability to save and load NavGraphs to/from Unreal archives
+ * Minor fixes and improvements
+
+== Version 2.4.2 (24/01/2022) ==
+* Ground Navigation
+ * Fixed navgrid raycast assert that could occur if a path point was on the boundary of the navgrid
+ * Properly reconfigured agent when the navgrid is explicitly set on the GroundNavigationComponent at runtime  
+ * Fixed navlink handling when string pulling line paths
+ * Fixed incorrectly allowed diagonal orientations in nav grid
+* 3D Navigation
+ * Improved performance when generating mostly empty octrees
+* Common
+ * Separated Blueprint notifications into ground and 3D navigation submenus
+ * Fixed generating nav graphs when they are child actors of another actor
+ * Fixed rare double free that could occur when nav graph generation finished
+ * Fixed various code analysis warnings
+ 
+== Version 2.4.1 (11/01/2022) ==
+* Ground Navigation
+ * Added InitialSpeed to NavGridTesting actors for when testing kinematic pathfinds
+* Common
+ * Fixed crash when collecting Chaos landscapes
+ * Fixed various static analysis warnings
+ * Fixed potential invalid pointer issues in Blueprint proxies
+
+== Version 2.4.0 (07/01/2022) ==
+* Ground Navigation
+ * Modifier Volumes are now supported by the nav grid, allowing cost multipliers and usage types to be specified within certain volumes
+ * Nav links now specify usage types, which are considered in the same way as modifier volume usage types
+ * Ability to specify that agents are allowed to get closer to ledges than they can to walls
+ * New EQS generator to generate a random distribution of points within a certain range on the nav grid
+ * Add track actor command, used to continually attempt to stay within a certain range of a target actor
+ * Improvements to kinematic pathfinding across open spaces
+ * Improvements to accuracy of path length on IsReachable test
+ * Consider slope penalty when using the nav mesh pathfinder for non-kinematic paths
+ * Minor improvements to nav poly mesh generation
+ * Fix assert when path destination is moved to be directly behind the actor following the path
+* 3D Navigation
+ * Improve performance of generating large octree volumes, especially when they are mostly empty
+* Common
+ * Improve logging performance
+ * Initial support for UE5 large world (double precision positions)
+ * Improve performance of nav graph rebuild requests by removing nav seed components and requiring all nav seeds to be nav seed actors
+ * Improve behaviour when an agent is moving from a location that is slightly outside of navigable space
+ * Fix problems caused by nav graph build completion callbacks executing while the wrong level collection is active
+ * Performance improvements on Unity
+ * Minor fixes and improvements
+
+== Version 2.3.4 (23/11/2021) ==
+* Ground Navigation
+ * Set tick order so that navigation component always runs before the pawn's controller, allowing the controller to use the supplied pawn rotation
+ * Clamp the maximum acceleration requested by the navigation component internally, and disable the clamping in Character Movement Component
+ * Make nav grids Blueprintable
+ * Fix crashes when Nav Invokers were configured incorrectly
+ * Fix edge cases where nav links didn't work properly if they were very close to a vertical boundary in the nav grid
+ * Minor performance improvement to polymesh iteration
+* 3D Navigation
+ * Fix nav modifier volume upgrade from Mercuna v1
+* Common
+ * Add a small margin to obstacles when avoiding to prevent collisions due to steering inaccuracies
+ * Fix problem where references on nav graph rendering components occasionally prevented the level from being saved
+ * Fix another problem where merging rotated nav graphs sometimes failed
+
+== Version 2.3.3 (11/11/2021) ==
+* Ground Navigation
+ * Fix rare failure to find a path for a character when going up or down a steep, narrow slope.
+ * Fix unnavigable material being ignored if it was immediately on top of a navigable surface.
+* Common
+ * Fix problem where merging rotated nav graphs sometimes failed
+ * Minor refactoring
+
+== Version 2.3.2 (29/10/2021) ==
+* Ground Navigation
+ * Ability to set size and type of a nav invoker volume spawned at runtime
+* Common
+ * Expose path length on IsReachableAsync API
+ * Add functions to set the Mercuna log filename at runtime, or add a suffix to it from command line arguments
+ * Improve behaviour when a nav graph is streamed out while a build is running against it
+ * Add ability to explicitly trigger a repath on a nav testing actor
+ * Fix C++17 build
+ * Fix build with recent UE5 changes
+
+== Version 2.3.1 (20/10/2021) ==
+* Ground Navigation
+ * Add nav invoker volume actor, which can be used to pre-generate specific parts of the map when using nav invokers
+ * Nav invoker components can now be deactivated and activated at runtime to control whether they are used
+ * Consider physical material override when determining physical material, if the primitive only has one material
+ * Fix problems handling very large navigable areas generated by nav invokers
+ * Fix rare issues calculating avoidance when close to the edge of the navigable area
+ * Allow the start position of raycasts and start/end position of nav links to be clamped further down to the nav grid if they are a little above it
+ * Fix nav grid builder issue causing error log when building contours for the poly mesh
+ * Fix problem with nav links disappearing when streaming in levels
+* Common
+ * Fix problem with Navigation Component MoveComplete delegate changing to the wrong type when using both 3D and Ground navigation
+ * Fix crash in avoidance if two agents are in precisely the same location
+
+== Version 2.3.0 (01/10/2021) ==
+* Ground Navigation
+ * Add Nav Invokers.  Nav grid is automatically generated near to nav invokers, and removed when the nav invoker moves away
+ * Support for vehicles using the Chaos physics system
+ * Level streaming support.  Nav grids can now merge together when levels are streamed in, and sections of nav grids are unloaded when a level is streamed out
+ * Improve vehicle/vehicle and vehicle/character avoidance
+ * The agent's movement type can now be configured on the obstacle component to adjust how avoidance treats the agent
+ * Add EQS Project test, for projecting points on to the nav grid
+ * Nav links now supported for animals as well as for characters
+ * Limit vehicle speed around corners that would cause the vehicle to roll over
+ * Simplify Nav Grid setup, removing the need to call to Create before building part of the grid or using Nav Invokers
+ * Add test to check whether a particular part of the nav grid has been built
+ * Minor fixes to nav links
+* Common
+ * Rename Allow Octree Merging to Allow Nav Graph Merging.  The old default configured in Mercuna settings will be lost and must be set up again.
+ * Allow nav graph build to be cancelled from the Mercuna menu (Unreal)
+ * Allow a path through multiple locations to finish at the start point
+ * Add a function on the navigation component to set the nav grid / nav octree to the best available.
+ * Add GetRemainingPathLength function to navigation components
+ * Minor refactoring, bug fixes and performance improvements 
+* 3D Navigation
+ * Fix problem where the same volume could be built multiple times during a nav octree build
+ * Fix problem where a waypoint could sometimes be shortcut out of the path
+
+== Version 2.2.7 (10/09/2021) ==
+* Ground Navigation
+ * Fix crashes when a ground navigation component is configured with an agent type that has been deleted.
+* Common
+ * Fix assert on multithreaded asynchronous level load.
+
+== Version 2.2.6 (03/09/2021) ==
+* Ground Navigation
+ * Fix incorrect poly mesh data load on consoles and mobile, that was causing crashes during pathfinding
+ * Fix crash if nav link traversal is interrupted
+ * Add ability to enable and disable avoidance for ground navigation agents at runtime
+ * Add ability to disable avoidance against specific other entities
+* 3D Navigation
+ * Allow 3D navigation configuration to be changed in Blueprint (Unreal)
+ * Expose acceleration from the 3D Movement Component (Unreal)
+* Common
+ * Fix crash on game shutdown if there were nav grid or nav octree build jobs running
+ * Fix rare crash when pathfollowing reaches the original destination while the path is being regenerated
+ * Handle agents being teleported immediately before a move request (Unreal)
+ * Minor logging improvements
+
+== Version 2.2.5 (19/08/2021) ==
+* Ground Navigation
+ * Add interface for changing ground navigation steering parameters at runtime
+ * Add turn radii and kinematic pathfinding option to ground navigation steering parameters
+
+== Version 2.2.4 (13/08/2021) ==
+* Ground Navigation
+ * Fix error during runtime nav grid build if CPU access not allowed for a spline mesh with a single physical material
+ * Give appropriate warning when a runtime build picks up a static or spline mesh that uses multiple physical materials and CPU access to the mesh isn't enabled
+ * Fix to avoidance radius for vehicles
+ * Fix length of nav grid raycasts on slopes
+* Common
+ * Fix hang if a nav graph is unloaded just after a world origin shift happened while a runtime nav graph rebuild is in progress
+* 3D Navigation
+ * Vastly improve performance for collecting large collision meshes on Unity, and fix minor Unity specific geometry collection issues
+
+== Version 2.2.3 (09/08/2021) ==
+* Ground Navigation
+ * Add ability to specify optional end direction for paths
+ * Characters and animals can override their pathfinding methods to switch between the two
+ * Fix rare problem where reaching the end of the path was reported as a failure
+ * Fix issues with ground navigation raycasts
+ * Minor fixes
+* 3D Navigation
+ * Fix rare possible locking bug during octree merges
+
+== Version 2.2.2 (27/07/2021) ==
+* Ground Navigation
+ * Fix vertical offset issue with exclusion volumes in navgrids
+ * Allow exclusion volumes to be updated and removed at runtime
+ * Allow exclusion volumes to be scaled
+ * Fix rare assert in pathfind searches that include navlinks
+ * Add ability to enable and disable navlinks
+ * Minor fixes
+* Common
+ * Fix static analysis warnings
+ * When constructing path curves build slightly more than minimum required in order to reduce recurving frequency
+
+== Version 2.2.1 (12/07/2021) ==
+* Ground Navigation
+ * Many fixes and improvements to the new polygon navmesh including:
+  * Fix boundaries between surface types
+  * Discard polygons not connected to a nav seed to save memory
+  * Allow character pathfinds to continue more quickly when building or rebuilding the grid at runtime by linking the polymesh on the fly
+  * Improved debug draw frame rate for large polymeshes
+  * Allow more than 256 polygons in a generation box
+  * Improvements to path quality
+  * Fix small memory leak during build
+ * Support for materials when using Chaos
+ * Ability to save nav grid as a 3D mesh in OBJ format for inspection
+ * Ability to save and load the nav grid through console commands (Unreal)
+ * Improvements to nav grid debug draw and debug draw configuration
+ * Prioritise generation of the nav grid nearest to navigating agents
+ * Allow an empty nav grid to be created without being built
+ * Allow generation of the nav grid without applying nav seeds
+ * Option to only build the part of the nav grid that has not yet been built
+ * EQS test that scores positions by the path length to the position
+ * Improve accuracy of IsReachable EQS test
+ * Align the nav grid for future level streaming support and to avoid a vertical boundary at world z=0.
+ * Fix reading of materials from Unreal landscape heightfields
+ * Fix height ranges for clamp to navigable and project to navigable tests
+ * Remove remaining code related to the old hierarchical pathfinding system
+ * Fix rare assert during nav grid runtime rebuild
+ * Don't deduplicate the nav grid on runtime rebuild
+* Common
+ * Fix rare deadlock when a path was deleted at the same time as a runtime rebuild completes
+ * Fix problem where path could incorrectly complete if the agent following the path teleported a long way
+ * Fix Pause/ResumeNavigation methods
+* 3D Navigation
+ * Add method to read current physics velocity of the controlled component to the 3D Movement Component
+ * Add option to restrict navigation to volumes close to surfaces
+ * Fix occasional bad spline path regeneration during agent movement
+
+== Version 2.2.0 (14/06/2021) ==
+* Ground Navigation
+ * Replace connectivity graph for hierarchical pathfinding with polygon navmesh for faster character pathfinding.
+ * Introduce annealing to prevent crowds of agents getting stuck against each other due to avoidance
+ * Reduce cases where avoidance pushes agents out of navigable space and improve recovery when this happens
+ * Various fixes to avoidance
+ * Increased max permitted slope angle for characters to 60 degrees
+ * Option to set character rotation using the controller rotation instead of orienting to movement (Unreal)
+ * Full support for nav grids rotated such that z is not up.
+ * Increase minimum ideal turn radius for characters.
+ * Reduce minimum disconnected region size to allow smaller islands of navigable space to be linked by nav links.
+ * Prioritise rebuild of nav grid near to navigating agents when rebuilding the grid
+ * Fix orientation of nav link endpoints
+ * Fix exclusion volumes.
+ * Fix rare asserts building smooth curves for path following
+* 3D Navigation
+ * Allow actors that are less than one cell size smaller than the maximum navigable radius to navigate closer to geometry
+ * Allow configuration of facing direction for movement (Unity)
+* Common
+ * Support for UE5 Early Access.
+ * Support for UE4.27.
+ * Minor performance improvements and fixes.
+ * Fix object lifetime issue with stat names, picked up by sanitizer. (Unreal)
+ * Add simple example integration for integrators with other game engines to use as a template.
+
+== Version 2.1.1 (07/04/2021) ==
+* Ground Navigation
+ * Various fixes and improvements to vehicle path following, especially when going in reverse and transitioning between forward and reverse sections
+ * Fix to paths for vehicles and animals getting too close to geometry resulting in collisions.  This increases the minimum width gap that vehicles and animals can fit through.
+ * Slightly reduce the minimum amount of friction that vehicles require before considering navigating on a surface.
+ * Increase penalty for moving in reverse, to discourage vehicles from driving in reverse for long stretches.
+ * Fix assert failure when a path turned by 180 degrees at a waypoint
+ * Reduce memory usage during nav grid deduplication (final stage of nav grid build)
+ * Fix memory leak when a nav grid generation box contains no geometry at all
+* Common
+ * Expose IsBuilding method on nav graphs so Blueprint can check whether a nav graph build is in progress
+ * Clear geometry cache between building different nav volumes to reduce memory usage during nav graph build
+
+== Version 2.1.0 (22/03/2021) ==
+* Ground Navigation
+ * Vehicles now find paths including reverse segments, and use reverse when approriate
+ * Significantly increased maximum range of kinematic pathfind searches for vehicles and animals
+ * Changed nav grid generation to use boxes rather than tiles, providing a basis for future development and providing the following fixes:
+  * No longer generate nav grid outside of the vertical bounds of the configured nav volumes
+  * Remove limit on the maximum number of navigable and non-navigable surfaces in a tile
+  * Limit of 255 regions now applies per box, making it almost impossible to reach.
+ * Various improvements to vehicle driving, including eliminating fishtailing at high speeds
+ * Fix nav links with start location at the very edge of the nav grid
+ * When rebuilding the nav grid, clear boxes that no longer have any geometry in at all
+ * Fix a problem where an incorrect transform was used when collecting certain SplineMeshComponents (Unreal)
+ * Fixes to very short paths and very short path sections (e.g. when a character starts very close to a nav link)
+ * Improvements to nav grid debug draw, including fixing pathfind debug draw to draw the whole nav quad tree cell instead of one corner of it (Unreal)
+ * Remove unreachable regions from the connectivity graph, saving memory
+* Common
+ * Refactor path sections to each have their own transform, improving precision and laying groundwork for future work.
+ * Disable nav graph building when landscape editing is active, as additional geometry is present in this mode (Unreal)
+
+== Version 2.0.5 (15/02/2021) ==
+* Ground Navigation
+ * Add IsReachable test (sync and async) to Nav Grid
+ * Option to merge nearby volumes when calling RebuildVolumes, to improve performance (Unreal)
+ * Exclude low friction sloped surfaces when pathfinding for vehicles
+ * Fix character avoidance radius
+* 3D Navigation
+ * Fix possible crash when rebuilding a volume containing multiple nav seeds
+* Common
+ * Fix crash when a nav graph is rebuilt and an agent following a path is a long way from navigable space after the rebuild
+ * Change MercunaSmoothPath::GetPosition and GetTangent to take distance down the path instead of arbitrary z parameter (Unreal)
+ * Fix nav testing actors getting out of sync after undo (Unreal)
+ * Remove all dependencies on PhysX for when build is using Chaos (Unreal)
+ * Rename IsReachableAsync blueprint functions to IsReachableLatent (Unreal)
+ * Fix proxy blueprint node behaviour when triggering a command cancels a previous command (Unreal)
+ * Change the way the active World is determined to support Single Process Multiplayer in Editor (Unreal)
+
+== Version 2.0.4 (25/01/2021) ==
+* 3D Navigation
+ * Improve shape of start of path when agent is moving at high speed
+ * Add asynchronous version of IsReachable test to Nav Octree
+ * Option to merge nearby volumes when calling RebuildVolumes, to improve performance (Unreal)
+ * Fix IsReachable test on 3D Navigation Component (Unreal)
+ * Ability to query the spline an agent is following (Unreal)
+ * Minor fixes
+* Ground Navigation
+ * Improve handling surfaces with very small regions of different physical materials
+* Common
+ * Log Mercuna build configuration
+ * Reduce jobs system log spam
+
+== Version 2.0.3 (11/01/2021) ==
+* Ground Navigation
+ * Performance improvements to navigation grid, especially for non-kinematic pathfinding
+ * Fix nav graph generation for landscapes with holes and multiple physical materials
+ * Vehicles start moving more quickly
+ * Fixes to vehicle avoidance
+* 3D Navigation
+ * Fix rare crash if an octree was deleted while it was being merged
+* Common
+ * Fix certain blueprint nodes not completing when used in a loop
+
+== Version 2.0.2 (18/12/2020) ==
+* Ground Navigation
+ * Correctly follow paths when nav grid up direction is not +Z
+ * Prefer to pick up flattest surface if two surfaces are overlapping when building the nav grid, to avoid MaxAngleChange being triggered incorrectly
+ * Detect and fix badly configured automatic gearbox for Unreal wheeled vehicles
+* Common
+ * Support Chaos physics in Unreal Engine 4.26 (except for Chaos vehicles and surface materials)
+ * Clean up MSVC static analysis warnings
+
+== Version 2.0.1 (07/12/2020) ==
+* Ground Navigation
+ * Fix rare assert when building nearly straight paths up slopes
+ * Fix to path smoothing for paths that transition between physical materials with different friction
+ * Improve estimate of downforce when driving over rough terrain, allowing vehicles to go faster 
+* Common
+ * Fix modification tracking of child components, to avoid incorrect Nav Grid Needs Rebuild warning
+
+== Version 2.0.0 (01/12/2020) ==
+ * Ground Navigation Release
+   * Quad-tree based nav grid provides navigation graph - editor, runtime generation
+   * Hierarchical A*	 pathfinding for characters
+   * Kinematic pathfinding for animals and vehicles
+   * Parabolic smooth paths with speeds computed based on agent’s physical capabilities
+   * Designer placeable nav links
+   * Circle & rectangle dynamic obstacle avoidance based on ORCA
+   * PhysX vehicle support
+   * Adaptive driving based on physical material properties
+   * Unreal 4.24 - 4.26 support 
+   
+ * 3D
+   * Compatible with our new Ground middleware
+   * Some components and functions have been renamed
+   * Major refactor of path system
+   * Large world path precision improvements
+   * World origin shift integration improvements
+   * Navigation volumes no longer based on UE4 brushes, allowing them to be spawned at runtime
+   * Faster octree generation for landscapes
+   * Very long paths include straight-line sections instead of making unnecessarily long arcs
+   * Avoidance now allows for box obstacles
+   * Modifier volumes now available in Unity
+   * PlayStation 5 support
+   * Support for UE4.26
