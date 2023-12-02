@@ -64,8 +64,8 @@ AHallucinationCharacter::AHallucinationCharacter()
 	// Movement
 	UCharacterMovementComponent* movement = GetCharacterMovement();
 	check(movement);
-	WalkSpeed = 150.f;
-	RunSpeed = 250.f;
+	WalkSpeed = 175.f;
+	RunSpeed = 275.f;
 	movement->MaxWalkSpeed = WalkSpeed;
 	MaxStemina = 100.f;
 	Stemina = MaxStemina;
