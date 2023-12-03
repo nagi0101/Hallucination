@@ -39,7 +39,6 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 	
 	const UPrimitiveComponent* HitComponent = hit.Component.Get();
 	bool walkable = true;
-	FVector slopeDown;
 	float relativeSlopeAngle = 0.0f;
 	if (HitComponent)
 	{
@@ -47,7 +46,6 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 		UPrimitiveComponent* primitiveComp = Cast<UPrimitiveComponent>(GetOwner()->GetRootComponent());
 		FBoxSphereBounds bound = primitiveComp->Bounds;
 		float traceLength = bound.BoxExtent.Z * 1.4f;
-		//float traceLength = 100.f;
 		FVector dx = GetOwnerCharacter()->GetActorForwardVector() * GetOwnerCharacter()->GetCapsuleComponent()->GetScaledCapsuleRadius();
 		FVector from = GetOwner()->GetActorLocation() + dx;
 		FVector to = from + GetGravityDirection() * traceLength;
@@ -64,7 +62,7 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 			relativeSlopeAngle = relativeSlopeAngleRad / PI * 180.f;
 
 			walkable = movement->GetWalkableFloorAngle() >= relativeSlopeAngle;
-			slopeDown = hit.Normal.Cross(GetGravityDirection().Cross(hit.Normal));
+			FVector slopeDown = hit.Normal.Cross(GetGravityDirection().Cross(hit.Normal));
 			slopeDown.Normalize();
 			//DrawDebugLine(GetWorld(), hit.Location, hit.Location + hit.Normal * 50.f, FColor::Red, false, -1.f, 0, 5.f);
 
@@ -83,21 +81,18 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 			}
 
 			float speed = movement->Velocity.Dot(-slopeDown);
-			//FVector offset = GetGravityDirection() * GetOwnerCharacter()->GetActorForwardVector().Dot(GetGravityDirection().Cross(tangentVec).Cross(tangentVec));
 			FVector offset = GetGravityDirection().Cross(tangentVec).Cross(tangentVec);
-			//DrawDebugLine(GetWorld(), hit.Location, hit.Location + offset * bound.BoxExtent.Z, FColor::Cyan, false, -1.f, 0, 5.f);
-			//DrawDebugLine(GetWorld(), hit.Location, hit.Location + tangentVec * 100.f, FColor::Emerald, false, -1.f, 0, 5.f);
+			DrawDebugLine(GetWorld(), hit.Location, hit.Location + offset * bound.BoxExtent.Z, FColor::Cyan, false, -1.f, 0, 5.f);
+			DrawDebugLine(GetWorld(), hit.Location, hit.Location + tangentVec * 100.f, FColor::Emerald, false, -1.f, 0, 5.f);
 
-			// inv slope
+			// Slope at the ceiling
 			if (relativeSlopeAngle > 10.f && movement->IsWalkable(hit) != walkable)
 			{
+				UE_LOG(LogTemp, Warning, TEXT("Inv slope"));
 				FHitResult swept;
 				swept.bStartPenetrating = true;
 				FVector dLoc = tangentVec * speed * DeltaTime;
-				//GetWorld()->LineTraceSingleByChannel(swept, hit.Location, hit.Location + dLoc, ECollisionChannel::ECC_Visibility);
 
-				GetOwnerCharacter()->SetActorLocation(GetOwnerCharacter()->GetActorLocation() + dLoc + offset * speed * DeltaTime, true, &swept);
-				//GetOwnerCharacter()->AddActorWorldOffset((tangentVec + offset) * speed * DeltaTime, true, &swept);
 				if (swept.bBlockingHit)
 				{
 					GetOwnerCharacter()->AddActorWorldOffset(dLoc * (swept.PenetrationDepth * KINDA_SMALL_NUMBER));
@@ -111,10 +106,13 @@ void UDynamicGravityCharacterComponent::ApplyDynamicGravity(FVector Direction, f
 		Velocity += Direction * DeltaTime * GetGravitationalAcceleration();
 	}
 	else
-	{
-		Velocity = Direction * GetGravitationalAcceleration();
+	{	
+		GetOwner()->AddActorWorldOffset(GetGravityDirection(), true);
+		Velocity = FVector::Zero();
 	}
 	UpdateComponentVelocity();
-	movement->Velocity += Velocity;
+	FVector MovementVelocity = movement->Velocity;
+	MovementVelocity.Z = 0.0f;
+	movement->Velocity = Velocity + MovementVelocity;
 	movement->UpdateComponentVelocity();
 }
