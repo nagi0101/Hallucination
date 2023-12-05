@@ -146,10 +146,10 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 			bool HasInterface = InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass());
 			if ((InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) || HasInterface) {
 				if (HasInterface) {
-					FloatInteractionDescription("Press E to interact");
+					FloatInteractionDescription("[E]");
 				}
 				else {
-					FloatInteractionDescription("Press mouse to interact(left:Pickup, right:Throw)");
+					FloatInteractionDescription("[Mouse]");
 				}
 				InteractedComp->SetRenderCustomDepth(true);
 			}
@@ -608,7 +608,7 @@ void AHallucinationCharacter::FloatInteractionDescription(FString newString)
 		FVector PlayerSize = RootComponent->GetLocalBounds().GetBox().GetSize();
 		//float disDiff = FMath::Abs(playerLocation.X - InteractedComp->GetComponentLocation().X);
 		//InteractionText->SetWorldLocation(InteractedComp->GetComponentLocation() + FVector(-Size.X, 0, Size.Z));
-		InteractionText->SetWorldLocation(playerLocation + cameraForwardVector * 200.0f + FVector(0,0,PlayerSize.Z/2	));
+		InteractionText->SetWorldLocation(playerLocation + cameraForwardVector * 150.0f + FVector(0,0,PlayerSize.Z/2	));
 	}
 	FVector objectLocation = InteractionText->GetComponentLocation();
 	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(objectLocation, playerLocation);
