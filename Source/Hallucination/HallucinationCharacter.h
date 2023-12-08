@@ -6,6 +6,8 @@
 #include "Engine.h"
 #include "GameFramework/Character.h"
 #include "Components/ArrowComponent.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "HallucinationCharacter.generated.h"
 
 class UInputComponent;
@@ -15,6 +17,7 @@ class UCameraComponent;
 class UAnimMontage;
 class USoundBase;
 class USpringArmComponent;
+class UDynamicGravityCharacterComponent;
 
 struct FDynamicMaterialScalarProperty
 {
@@ -47,6 +50,9 @@ class AHallucinationCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	UDynamicGravityCharacterComponent* DynamicGravityComponent;
 
 private:
 	/**  */
@@ -109,25 +115,49 @@ private:
 
 	/* Interact */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	bool IsGrabbing;
+	bool OnPickup;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	bool OnDrawParabola;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	bool OnPushingAndPulling;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	float ThrowPower;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	USplineComponent* ThrowPath;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	USplineMeshComponent* EndThrowPathMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	FVector PushPullDirection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	double DistToObject;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
 	float InteractDistance;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	//UAnimMontage* DragStartMontage;
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	//UAnimMontage* DragEndMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	AActor* InteractedObject;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	AActor* interactedObject;
+	UPrimitiveComponent* InteractedComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
-	UPrimitiveComponent* interactedComp;
+	FString InteractString;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	UTextRenderComponent* InteractionText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact", meta = (AllowPrivateAccess = "true"))
+	float InteractionTextHeight;
+
+
+
 
 	/* Skill */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill", meta = (AllowPrivateAccess = "true"))
@@ -184,8 +214,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
 	void Damage(float damage);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HP)
+	void Die();
+
+
 protected:
 	virtual void BeginPlay();
+
+	virtual void Tick(float DeltaTime);
 
 private:
 	UFUNCTION(BlueprintCallable, Category=CameraShake)
@@ -207,17 +243,38 @@ private:
 	void EndHoldBreath();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void Interact();
+	bool LineTrace(FHitResult& hit, float dis);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void Throw();
+	void InteractWithMouse();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void InteractWithKey();
 
 	void Pickup();
 
 	void Putdown();
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void PushAndPull(FVector newLocation);
+	FPredictProjectilePathResult DrawParabola();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void DrawSplineArc(FPredictProjectilePathResult PathResult);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void Throw();
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void PushAndPull(float scale);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void SetInteractionString(FString newString, float time);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void FloatInteractionDescription(FString newString);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void SetActorDynamicGravity();
 
 	UFUNCTION(BlueprintCallable, Category = PostProcess)
 	void SetPostProcessParameter();
@@ -228,9 +285,6 @@ private:
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void CheckHP(float deltaTime);
-
-	UFUNCTION(BlueprintCallable, Category = HP)
-	void Die();
 
 	UFUNCTION(BlueprintCallable, Category = HP)
 	void Revive();

@@ -25,7 +25,7 @@ public:
 
 	virtual void SetupTargetComponent() override;
 	virtual void ApplyDynamicGravity(FVector Direction, float DeltaTime) override;
-	
+
 	UFUNCTION(BlueprintCallable, Category = "DynamicGravity")
 	FVector GetGravityRotatedControllForward() const;
 

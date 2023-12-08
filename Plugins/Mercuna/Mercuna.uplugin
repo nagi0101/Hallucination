@@ -1,0 +1,55 @@
+{
+	"FileVersion": 3,
+	"Version": 20705,
+	"VersionName": "2.7.5",
+	"FriendlyName": "Mercuna Navigation",
+	"Description": "3D and Ground navigation solution that enables characters, creatures and vehicles to find their way through complex environments.",
+	"Category": "AI",
+	"CreatedBy": "Mercuna Developments Limited",
+	"CreatedByURL": "mercuna.com",
+	"DocsURL": "https://mercuna.com/documentation/",
+	"MarketplaceURL": "",
+	"SupportURL": "mailto:support@mercuna.com",
+	"EngineVersion": "5.0.0",
+	"EnabledByDefault": true,
+	"CanContainContent": true,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "MercunaCore",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "Mercuna",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "Mercuna3DNavigation",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "Mercuna2DNavigation",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "MercunaEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "Mercuna3DMovement",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ChaosVehiclesPlugin",
+			"Enabled": true
+		}
+	]
+}

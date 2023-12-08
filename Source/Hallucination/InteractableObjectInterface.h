@@ -26,4 +26,10 @@ public:
 	/// </summary>
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void InteractThis();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void InteractingThis(float DeltaSecond, float ElapsedSecond);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void InteractEndThis(float ElapsedSecond);
 };

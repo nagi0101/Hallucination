@@ -49,14 +49,14 @@ void AInteractableActor::HitMesh(UPrimitiveComponent* HitComponent, AActor* Othe
 			if (GetWorld()->GetTimerManager().GetTimerRemaining(hitTimer) <= 0) {
 				GetWorld()->GetTimerManager().SetTimer(hitTimer, [&]()
 					{
-						GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Hit Clear"));
+						//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Hit Clear"));
 						OnHit = false;
 						GetWorld()->GetTimerManager().ClearTimer(hitTimer);
 					}, 0.3f, false);
 			}
 		}
 		else {
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Component HIt"));
+			//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("On Component HIt"));
 			FVector meshLocation = staticMesh->GetComponentLocation();
 			//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("meshLocation : %s"),*meshLocation.ToString()));
 			UGameplayStatics::PlaySoundAtLocation(this, SB_Clash, meshLocation);

@@ -47,6 +47,8 @@ void UDynamicGravityActorComponent::SetGravityDirection(FVector Direction)
 {
 	GravityDirection = Direction;
 	GravityDirection.Normalize();
+	Velocity = Direction * GetGravitationalAcceleration();
+	UpdateComponentVelocity();
 }
 
 void UDynamicGravityActorComponent::SetupTargetComponent()
@@ -99,7 +101,7 @@ FHitResult UDynamicGravityActorComponent::GetDownLayHit() const
 
 	FHitResult hit;
 	FBoxSphereBounds bound = primitiveComp->Bounds;
-	float traceLength = bound.BoxExtent.Z * 1.1f;
+	float traceLength = bound.BoxExtent.Z * 1.4f;
 	FVector from = primitiveComp->GetComponentLocation();
 	FVector to = from + GravityDirection * traceLength;
 	GetWorld()->LineTraceSingleByChannel(hit, from, to, ECollisionChannel::ECC_Visibility);
