@@ -14,6 +14,7 @@
 #include "DynamicGravityCharacterComponent.h"
 #include "InteractableObjectInterface.h"
 #include "Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h"
+#include "DynamicGravityCharacterComponent.h"
 
 #define D(x) if(GEngine){GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT(x));}
 //////////////////////////////////////////////////////////////////////////
@@ -116,6 +117,9 @@ AHallucinationCharacter::AHallucinationCharacter()
 	HPRecoveryCooltime = 5.f;
 	LastDamaged = 0.0f;
 	isDead = false;
+
+	// Dynamic Gravity
+	DynamicGravityComponent = CreateDefaultSubobject<UDynamicGravityCharacterComponent>(TEXT("DynamicGravityCharacter"));
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -180,6 +184,10 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 	}
 	else {
 		InteractionText->SetText(FText::FromString(TEXT(" ")));
+		if (OnPickup)
+		{
+			FloatInteractionDescription("[LClick]/[RClick]");
+		}
 	}
 }
 
@@ -506,7 +514,15 @@ FPredictProjectilePathResult AHallucinationCharacter::DrawParabola() {
 	projectilePath.TraceChannel = ECollisionChannel::ECC_Visibility;
 	projectilePath.ActorsToIgnore = {GetOwner(),InteractedObject};
 	projectilePath.SimFrequency = 20.0f;
-	projectilePath.OverrideGravityZ = 0;
+	UDynamicGravityActorComponent* ComponentDynamicGravityComp = Cast<UDynamicGravityActorComponent>(InteractedComp->GetOwner()->GetComponentByClass(UDynamicGravityActorComponent::StaticClass()));
+	if (ComponentDynamicGravityComp)
+	{
+		projectilePath.OverrideGravityZ = ComponentDynamicGravityComp->GetGravityDirection().Z * ComponentDynamicGravityComp->GetGravitationalAcceleration();
+	}
+	else
+	{
+		projectilePath.OverrideGravityZ = 0;
+	}
 	projectilePath.DrawDebugType = EDrawDebugTrace::None;
 	projectilePath.DrawDebugTime = 0.1f;
 	projectilePath.bTraceComplex = false;

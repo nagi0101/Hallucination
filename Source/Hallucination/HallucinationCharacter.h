@@ -17,6 +17,7 @@ class UCameraComponent;
 class UAnimMontage;
 class USoundBase;
 class USpringArmComponent;
+class UDynamicGravityCharacterComponent;
 
 struct FDynamicMaterialScalarProperty
 {
@@ -49,6 +50,9 @@ class AHallucinationCharacter : public ACharacter
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Component", meta = (AllowPrivateAccess = "true"))
+	UDynamicGravityCharacterComponent* DynamicGravityComponent;
 
 private:
 	/**  */
