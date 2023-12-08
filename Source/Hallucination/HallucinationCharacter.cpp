@@ -14,6 +14,7 @@
 #include "DynamicGravityCharacterComponent.h"
 #include "InteractableObjectInterface.h"
 #include "Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h"
+#include "DynamicGravityCharacterComponent.h"
 
 #define D(x) if(GEngine){GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT(x));}
 //////////////////////////////////////////////////////////////////////////
@@ -116,6 +117,9 @@ AHallucinationCharacter::AHallucinationCharacter()
 	HPRecoveryCooltime = 5.f;
 	LastDamaged = 0.0f;
 	isDead = false;
+
+	// Dynamic Gravity
+	DynamicGravityComponent = CreateDefaultSubobject<UDynamicGravityCharacterComponent>(TEXT("DynamicGravityCharacter"));
 }
 
 void AHallucinationCharacter::BeginPlay()
@@ -510,7 +514,7 @@ FPredictProjectilePathResult AHallucinationCharacter::DrawParabola() {
 	projectilePath.TraceChannel = ECollisionChannel::ECC_Visibility;
 	projectilePath.ActorsToIgnore = {GetOwner(),InteractedObject};
 	projectilePath.SimFrequency = 20.0f;
-	projectilePath.OverrideGravityZ = 0;
+	projectilePath.OverrideGravityZ = DynamicGravityComponent->GetGravityDirection().Z;
 	projectilePath.DrawDebugType = EDrawDebugTrace::None;
 	projectilePath.DrawDebugTime = 0.1f;
 	projectilePath.bTraceComplex = false;
