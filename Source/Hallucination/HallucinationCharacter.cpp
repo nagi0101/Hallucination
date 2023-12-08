@@ -180,6 +180,10 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 	}
 	else {
 		InteractionText->SetText(FText::FromString(TEXT(" ")));
+		if (OnPickup)
+		{
+			FloatInteractionDescription("[LClick]/[RClick]");
+		}
 	}
 }
 
