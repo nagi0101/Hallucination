@@ -505,6 +505,7 @@ void AHallucinationCharacter::Putdown() {
 FPredictProjectilePathResult AHallucinationCharacter::DrawParabola() {
 	FPredictProjectilePathParams projectilePath;
 	FVector cameraForwardVector = FirstPersonCameraComponent->GetForwardVector();
+	UDynamicGravityActorComponent* ComponentDynamicGravityComp = Cast<UDynamicGravityActorComponent>(InteractedComp->GetOwner()->GetComponentByClass(UDynamicGravityActorComponent::StaticClass()));
 	projectilePath.StartLocation = InteractedComp->GetComponentLocation();
 	projectilePath.LaunchVelocity = cameraForwardVector * ThrowPower;
 	projectilePath.bTraceWithCollision = true;
@@ -514,7 +515,7 @@ FPredictProjectilePathResult AHallucinationCharacter::DrawParabola() {
 	projectilePath.TraceChannel = ECollisionChannel::ECC_Visibility;
 	projectilePath.ActorsToIgnore = {GetOwner(),InteractedObject};
 	projectilePath.SimFrequency = 20.0f;
-	projectilePath.OverrideGravityZ = DynamicGravityComponent->GetGravityDirection().Z;
+	projectilePath.OverrideGravityZ = ComponentDynamicGravityComp->GetGravityDirection().Z * ComponentDynamicGravityComp->GetGravitationalAcceleration();
 	projectilePath.DrawDebugType = EDrawDebugTrace::None;
 	projectilePath.DrawDebugTime = 0.1f;
 	projectilePath.bTraceComplex = false;
