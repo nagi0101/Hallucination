@@ -2,10 +2,10 @@
 **_Team Get High Presents_**
 
 - Midterm Trailer 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/oOxi5Nnza6c?si=QIFBcwA34-VtnQtT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/oOxi5Nnza6c/0.jpg)](https://www.youtube.com/watch?v=oOxi5Nnza6c)
 
 - Final Trailer  
-
 
 
 _@2023-2, Prof. H. Kang, KHU Department of Software Convergence, SWCON212 Game Engine Basics_
@@ -23,7 +23,8 @@ _@2023-2, Prof. H. Kang, KHU Department of Software Convergence, SWCON212 Game E
 
 * [**박지인**](https://github.com/nagi0101)  
 <img src="./images/jiin.png" width=200px />
->팀원, Player, Dynamic Gravity, Post Process(player camera), Save System, Packaging
+
+> 팀원, Player, Dynamic Gravity, Post Process(player camera), Save System, Packaging
 
 >철학과에서 소프트웨어융합학과 게임트랙을 다전공 하고 있는 낭만파 개발자. 컴퓨터 그래픽스에 관심이 많다.
 
