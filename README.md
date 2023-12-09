@@ -42,9 +42,9 @@ Hallucination은 Windows 환경만을 지원합니다.
   * 밀고 당기기  
   ![Push and pull](./images/pushpull.gif)
     * 물체 잡은 상태에서 앞/뒤로 이동하여 물체 밀고 당기기
-* C(능력 획득 필요): 플레이어 중력 반전
+* C(능력 획득 필요): 플레이어 중력 반전  
   ![](./images/gravityPlayer.gif)
-* R(능력 획득 필요): 사물 중력 반전
+* R(능력 획득 필요): 사물 중력 반전  
   ![](./images/gravityThing.gif)
 
 ## 퍼즐
