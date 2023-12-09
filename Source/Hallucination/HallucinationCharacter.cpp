@@ -148,28 +148,41 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 				InteractedComp = Cast<UPrimitiveComponent>(StaticMeshComp);
 			}
 			bool HasInterface = InteractedObject->GetClass()->ImplementsInterface(UInteractableObjectInterface::StaticClass());
-			if ((InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) || HasInterface) {
-				if (HasInterface) {
-					FloatInteractionDescription("[E]");
-				}
-				else if (InteractedObject->ActorHasTag("Moveable")) {
-					FloatInteractionDescription("[Mouse] to Move");
-				}
-				else {
-					FloatInteractionDescription("[Mouse]");
-				}
+			bool HasDG = InteractedObject->FindComponentByClass(UDynamicGravityActorComponent::StaticClass()) != nullptr;
+			if ((InteractedObject->Tags.Num() > 0 && !OnPickup && !OnPushingAndPulling) || HasInterface  || HasDG) {
 				int32 count = GetWorld()->PostProcessVolumes.Num();
 				for (int32 x = 0; x < count; ++x)
 				{
 					FPostProcessVolumeProperties volume = GetWorld()->PostProcessVolumes[x]->GetProperties();
 					FPostProcessSettings* settings = (FPostProcessSettings*)volume.Settings;
-					if (InteractedObject->FindComponentByClass(UDynamicGravityActorComponent::StaticClass())!=nullptr) {
+					if (HasDG) {
+						if (HasInterface) {
+							FloatInteractionDescription("[R] / [E]");
+						}
+						else if (InteractedObject->ActorHasTag("Moveable")) {
+							FloatInteractionDescription("[R] / [Mouse] to Move");
+						}
+						else if(InteractedObject->ActorHasTag("Pickable")) {
+							FloatInteractionDescription("[R] / [Mouse]");
+						}
+						else {
+							FloatInteractionDescription("[R]");
+						}
 						if (settings->WeightedBlendables.Array.Num() >= 2) {
 							settings->WeightedBlendables.Array[0].Weight = 0;
 							settings->WeightedBlendables.Array[1].Weight = 1;
 						}
 					}
 					else {
+						if (HasInterface) {
+							FloatInteractionDescription("[E]");
+						}
+						else if (InteractedObject->ActorHasTag("Moveable")) {
+							FloatInteractionDescription("[Mouse] to Move");
+						}
+						else {
+							FloatInteractionDescription("[Mouse]");
+						}
 						if (settings->WeightedBlendables.Array.Num() >= 2) {
 							settings->WeightedBlendables.Array[0].Weight = 1;
 							settings->WeightedBlendables.Array[1].Weight = 0;
