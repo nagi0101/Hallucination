@@ -46,9 +46,10 @@ Dynamic Gravity와 3D Nav Mesh를 통해 평면에서만 진행되는 게임에�
 
 ### 자연스럽게 게임을 즐길 수 있는 완만한 학습 곡선
 플레이어에게 많은 정보를 숨기는 호러 장르의 특성상 지나치게 친절한 튜토리얼은 오히려 독이 됩니다. 하지만 지나치게 불친절한 튜토리얼 역시 게임의 UX를 해치는 요인으로 작용합니다. 때문에 Hallucination은 의식적으로 학습을 진행해야하는 튜토리얼은 최소화 하되, 게임을 진행하는 과정에서 자연스럽게 게임의 규칙을 학습할 수 있도록 UX/UI를 디자인 하였습니다.
-   
-<img src="./images/valveFloat.png" height=200px style="display: inline-block;"/>
-<img src="./images/globeFloat.png" height=200px style="display: inline-block;"/>
+<div>
+    <img src="./images/valveFloat.png" height=200px style="display: inline-block;"/>
+    <img src="./images/globeFloat.png" height=200px style="display: inline-block;"/>
+</div>
 
 위와 같이 상호작용 할 수 있는 물체에 사용 가능한 키를 띄워주어 플레이어가 키를 외워야 하는 부담을 줄였습니다. 추가로 아래와 같이 게임 진행의 핵심이 되는 정보들은 자막을 통해 전달하여 사용자가 쉽게 정보를 인지할 수 있습니다.
 
