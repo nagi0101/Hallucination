@@ -17,7 +17,7 @@ Hallucination은 괴물을 피해 저택에서 탈출하는 호러 스텔스 게
 [![Midterm Trailer](https://img.youtube.com/vi/oOxi5Nnza6c/0.jpg)](https://www.youtube.com/watch?v=oOxi5Nnza6c)
 
 - Final Trailer  
-
+[![Final Trailer](https://img.youtube.com/vi/C1FPUSY_C-c/0.jpg)](https://www.youtube.com/watch?v=C1FPUSY_C-c)
 
 ## 게임 특징
 ### Dynamic Gravity와 3D Navigation Mesh를 활용한 입체적인 레벨 디자인
