@@ -157,16 +157,16 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 					FPostProcessSettings* settings = (FPostProcessSettings*)volume.Settings;
 					if (HasDG) {
 						if (HasInterface) {
-							FloatInteractionDescription("[R] / [E]");
+							FloatInteractionDescription("[R] / [E]", hit.Location);
 						}
 						else if (InteractedObject->ActorHasTag("Moveable")) {
-							FloatInteractionDescription("[R] / [Mouse] to Move");
+							FloatInteractionDescription("[R] / [Mouse] to Move", hit.Location);
 						}
 						else if(InteractedObject->ActorHasTag("Pickable")) {
-							FloatInteractionDescription("[R] / [Mouse]");
+							FloatInteractionDescription("[R] / [Mouse]", hit.Location);
 						}
 						else {
-							FloatInteractionDescription("[R]");
+							FloatInteractionDescription("[R]", hit.Location);
 						}
 						if (settings->WeightedBlendables.Array.Num() >= 2) {
 							settings->WeightedBlendables.Array[0].Weight = 0;
@@ -175,13 +175,13 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 					}
 					else {
 						if (HasInterface) {
-							FloatInteractionDescription("[E]");
+							FloatInteractionDescription("[E]", hit.Location);
 						}
 						else if (InteractedObject->ActorHasTag("Moveable")) {
-							FloatInteractionDescription("[Mouse] to Move");
+							FloatInteractionDescription("[Mouse] to Move", hit.Location);
 						}
 						else {
-							FloatInteractionDescription("[Mouse]");
+							FloatInteractionDescription("[Mouse]", hit.Location);
 						}
 						if (settings->WeightedBlendables.Array.Num() >= 2) {
 							settings->WeightedBlendables.Array[0].Weight = 1;
@@ -220,7 +220,7 @@ void AHallucinationCharacter::Tick(float DeltaTime) {
 		InteractionText->SetText(FText::FromString(TEXT(" ")));
 		if (OnPickup)
 		{
-			FloatInteractionDescription("[LClick]/[RClick]");
+			FloatInteractionDescription("[LClick] / [RClick]", hit.Location);
 		}
 	}
 }
@@ -647,7 +647,7 @@ void AHallucinationCharacter::SetInteractionString(FString newString, float time
 	}
 }
 
-void AHallucinationCharacter::FloatInteractionDescription(FString newString)
+void AHallucinationCharacter::FloatInteractionDescription(FString newString, FVector location)
 {
 	//check(InteractionText);
 	FVector playerLocation = RootComponent->GetComponentLocation();
@@ -658,7 +658,8 @@ void AHallucinationCharacter::FloatInteractionDescription(FString newString)
 		FVector PlayerSize = RootComponent->GetLocalBounds().GetBox().GetSize();
 		//float disDiff = FMath::Abs(playerLocation.X - InteractedComp->GetComponentLocation().X);
 		//InteractionText->SetWorldLocation(InteractedComp->GetComponentLocation() + FVector(-Size.X, 0, Size.Z));
-		InteractionText->SetWorldLocation(playerLocation + cameraForwardVector * 150.0f + FVector(0,0,PlayerSize.Z/2	));
+		//InteractionText->SetWorldLocation(playerLocation + cameraForwardVector * 150.0f + FVector(0,0,PlayerSize.Z/2	));
+		InteractionText->SetWorldLocation(location + cameraForwardVector * -10);
 	}
 	FVector objectLocation = InteractionText->GetComponentLocation();
 	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(objectLocation, playerLocation);
