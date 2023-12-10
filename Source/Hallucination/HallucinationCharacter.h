@@ -271,7 +271,7 @@ private:
 	void SetInteractionString(FString newString, float time);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	void FloatInteractionDescription(FString newString);
+	void FloatInteractionDescription(FString newString, FVector location);
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void SetActorDynamicGravity();
