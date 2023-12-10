@@ -122,10 +122,13 @@ Hallucination은 Windows 환경만을 지원합니다.
 
 # About Us
 * [**서범준**](https://github.com/Seo-BJ)  
-_팀장, Enemy, 총괄 디렉팅, Stage1 & Enemy-1, 사운드_
+
+    _팀장, Enemy, 총괄디렉팅, Enemy-1, Stage1, 사운드_  
+
+    > 수학과에서 건너온 세상에서 제일 까다로운 INTJ  
 
 * [**하재준**](https://github.com/How0515)  
-_팀원, Enemy, Stage2 & Enemy-2, 범용 AI 길찾기, Stage??? 제작_
+    _팀원, Enemy, Enemy-2, Stage2, Stage???, 범용 AI 길찾기_
 
 * [**박지인**](https://github.com/nagi0101)  
   <img src="./images/jiin.png" width=200px />
@@ -135,13 +138,13 @@ _팀원, Enemy, Stage2 & Enemy-2, 범용 AI 길찾기, Stage??? 제작_
   > 철학과에서 소프트웨어융합학과 게임트랙을 다전공 하고 있는 낭만파 개발자. 컴퓨터 그래픽스에 관심이 많다.
 
 * [**최홍송**](https://github.com/bubbletok)  
-_팀원, Player, Interaction, UI, Packaging_
+    _팀원, Player, Interaction, UI, Packaging_
 
 * [**김정훈**](https://github.com/q910389942)  
-_팀원, World, 에셋 탐색, 월드 디자인_
+    _팀원, World, 에셋 탐색, 월드 디자인_
 
 * [**문호성**](https://github.com/sim2han)  
-_팀원, World, 레벨 디자인, 월드 디자인, 엔딩 제작_
+    _팀원, World, 레벨 디자인, 월드 디자인, 엔딩 제작_
 
 # License
 Hallucination is licensed under the MIT License. See [LICENSE.txt](./LICENSE.txt) for detail.
