@@ -62,10 +62,10 @@ Dynamic Gravity와 3D Nav Mesh를 통해 평면에서만 진행되는 게임에�
 # Download
 Hallucination은 Windows 환경만을 지원합니다.
 
-## [Windows]()   
-[다운로드]()
-> 1. zip 파일 다운로드 후 압축 해제
-> 1. Hallucination.exe 실행
+## [Windows](https://github.com/Seo-BJ/Hallucination/releases/latest)   
+[다운로드](https://github.com/Seo-BJ/Hallucination/releases/latest)  
+1. zip 파일 다운로드 후 압축 해제
+1. Hallucination.exe 실행
 
 # How To Play
 
