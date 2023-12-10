@@ -663,6 +663,13 @@ void AHallucinationCharacter::FloatInteractionDescription(FString newString, FVe
 	}
 	FVector objectLocation = InteractionText->GetComponentLocation();
 	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(objectLocation, playerLocation);
+	UDynamicGravityCharacterComponent* gravityComponent = Cast<UDynamicGravityCharacterComponent>(GetComponentByClass(UDynamicGravityCharacterComponent::StaticClass()));
+	float gravityZ = gravityComponent->GetGravityDirection().Z;
+	//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("gravity z: %f"), gravityZ));
+	if (gravityZ > 0) {
+		newRotation.Roll = -180;
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("gravity z: %f"), gravityZ));
+	}
 	InteractionText->SetWorldRotation(FRotator(newRotation));
 }
 
