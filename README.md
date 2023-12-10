@@ -120,6 +120,11 @@ Hallucination은 Windows 환경만을 지원합니다.
 1. Stage???
 1. 엔딩
 
+## 공략
+*주의: 공략을 보고 게임을 클리어 하는 경우 의도된 재미를 온전히 느끼지 못할 수 있습니다. 최대한 공략을 보지 않고 게임을 클리어 하는 것을 추천드립니다.*
+1. [Stage-1](./Solution.md#stage-1)
+1. [Stage-2](./Solution.md#stage-2)
+
 # About Us
 * [**서범준**](https://github.com/Seo-BJ)  
 
@@ -131,11 +136,16 @@ Hallucination은 Windows 환경만을 지원합니다.
     _팀원, Enemy, Enemy-2, Stage2, Stage???, 범용 AI 길찾기_
 
 * [**박지인**](https://github.com/nagi0101)  
-  <img src="./images/jiin.png" width=200px />
+    <img src="./images/jiin.png" width=200px />
+    
+    _팀원, Player, Dynamic Gravity, Post Process(player camera), Save System, Packaging_  
+    
+    > 철학과에서 소프트웨어융합학과 게임트랙을 다전공 하고있는 낭만파 개발자. 컴퓨터 그래픽스에 관심이 많다. 세상에 몇 명 없는 사람 좋아하는 INTP.
 
-  _팀원, Player, Dynamic Gravity, Post Process(player camera), Save System, Packaging_  
-
-  > 철학과에서 소프트웨어융합학과 게임트랙을 다전공 하고 있는 낭만파 개발자. 컴퓨터 그래픽스에 관심이 많다.
+    > 최근 자신의 캐치프레이즈를 무엇으로 정할지 고민중이다. 아래는 그가 후보군으로 두고 있는 자신의 캐치프레이즈이다.  
+    >   1. 낭만파 프로그래머 (원래 쓰던 캐치프레이즈)
+    >   1. 공리주의 프로그래머
+    >   1. 이 시대의 융합형 인재
 
 * [**최홍송**](https://github.com/bubbletok)  
     _팀원, Player, Interaction, UI, Packaging_
