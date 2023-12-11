@@ -14,12 +14,15 @@ _@2023-2, Prof. H. Kang, KHU Department of Software Convergence, SWCON212 Game E
 Hallucination은 괴물을 피해 저택에서 탈출하는 호러 스텔스 게임입니다. 저택에는 눈이 멀었지만 귀와 코가 아주 예민한 괴물이 돌아다니고 있습니다. 당신은 괴물을 유인하거나, '특별한 능력'을 사용해서 저택의 퍼즐들을 풀어나가야 합니다. 행운을 빕니다.
 
 ### Midterm Trailer  
+[Watch on Youtube](https://www.youtube.com/watch?v=oOxi5Nnza6c)  
 [![Midterm Trailer](https://img.youtube.com/vi/oOxi5Nnza6c/0.jpg)](https://www.youtube.com/watch?v=oOxi5Nnza6c)
 
 ### Final Trailer  
+[Watch on Youtube](https://www.youtube.com/watch?v=SPiqvQ5tQQ0)  
 [![Final Trailer](https://img.youtube.com/vi/SPiqvQ5tQQ0/0.jpg)](https://www.youtube.com/watch?v=SPiqvQ5tQQ0)
 
 ### 개발자 코멘터리
+[Watch on Youtube](https://www.youtube.com/watch?v=V5y_72RbT6Y)  
 [![개발자 코멘터리](https://img.youtube.com/vi/V5y_72RbT6Y/0.jpg)](https://www.youtube.com/watch?v=V5y_72RbT6Y)
 
 ## 게임 특징
