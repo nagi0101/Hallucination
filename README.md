@@ -5,7 +5,7 @@
 _@2023-2, Prof. H. Kang, KHU Department of Software Convergence, SWCON212 Game Engine Basics_
 
 ## 게임 소개
-- _**시놉시스**_  
+### 시놉시스  
   > 급작스레 쏟아지는 비.  
     남자는 비를 피해 버려진 저택으로 쫒기듯 숨었다.  
     ...그러지 않은 것이 좋았을텐데 말이다.  
@@ -13,11 +13,14 @@ _@2023-2, Prof. H. Kang, KHU Department of Software Convergence, SWCON212 Game E
 
 Hallucination은 괴물을 피해 저택에서 탈출하는 호러 스텔스 게임입니다. 저택에는 눈이 멀었지만 귀와 코가 아주 예민한 괴물이 돌아다니고 있습니다. 당신은 괴물을 유인하거나, '특별한 능력'을 사용해서 저택의 퍼즐들을 풀어나가야 합니다. 행운을 빕니다.
 
-- Midterm Trailer  
+### Midterm Trailer  
 [![Midterm Trailer](https://img.youtube.com/vi/oOxi5Nnza6c/0.jpg)](https://www.youtube.com/watch?v=oOxi5Nnza6c)
 
-- Final Trailer  
+### Final Trailer  
 [![Final Trailer](https://img.youtube.com/vi/SPiqvQ5tQQ0/0.jpg)](https://www.youtube.com/watch?v=SPiqvQ5tQQ0)
+
+### 개발자 코멘터리
+[![개발자 코멘터리](https://img.youtube.com/vi/V5y_72RbT6Y/0.jpg)](https://www.youtube.com/watch?v=V5y_72RbT6Y)
 
 ## 게임 특징
 ### Dynamic Gravity와 3D Navigation Mesh를 활용한 입체적인 레벨 디자인
@@ -158,3 +161,7 @@ Hallucination은 Windows 환경만을 지원합니다.
 
 # License
 Hallucination is licensed under the MIT License. See [LICENSE.txt](./LICENSE.txt) for detail.
+
+# Miscellaneous
+## Bug Report
+버그 제보는 [Issue](https://github.com/Seo-BJ/Hallucination/issues) 페이지를 이용 부탁드립니다:)
