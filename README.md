@@ -161,3 +161,7 @@ Hallucination은 Windows 환경만을 지원합니다.
 
 # License
 Hallucination is licensed under the MIT License. See [LICENSE.txt](./LICENSE.txt) for detail.
+
+# Miscellaneous
+## Bug Report
+버그 제보는 [Issue](https://github.com/Seo-BJ/Hallucination/issues) 페이지를 이용 부탁드립니다:)
